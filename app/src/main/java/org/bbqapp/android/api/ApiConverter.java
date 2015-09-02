@@ -55,7 +55,7 @@ class ApiConverter implements Converter {
     private static final String PREFERRED_CHARSET_NAME = "utf-8";
     public static final Charset DEFAULT_CHARSET =
             Charset.isSupported(PREFERRED_CHARSET_NAME) ? Charset.forName(PREFERRED_CHARSET_NAME) : Charset.defaultCharset();
-    public static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; " +
+    public static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=" +
             DEFAULT_CHARSET.name().toLowerCase());
     public static final MediaType IMAGE_JPEG_MEDIA_TYPE = MediaType.parse("image/jpeg");
 
