@@ -47,8 +47,8 @@ public final class LocationService implements LocationListener {
 
     private Set<OnLocationListener> onLocationListeners = new HashSet<>();
 
-    private LocationService(Context context) {
-        locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+    private LocationService(LocationManager locationManager) {
+        this.locationManager = locationManager;
 
         // set last location
         lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -67,10 +67,20 @@ public final class LocationService implements LocationListener {
      * @return instance of {@link LocationService}
      */
     public static LocationService getService(Context context) {
+        return getService((LocationManager) context.getSystemService(Context.LOCATION_SERVICE));
+    }
+
+    /**
+     * Returns {@link LocationService}
+     *
+     * @param locationManager location manager
+     * @return instance of {@link LocationService}
+     */
+    public static LocationService getService(LocationManager locationManager) {
         if (instance == null) {
             synchronized (LocationService.class) {
                 if (instance == null) {
-                    instance = new LocationService(context);
+                    instance = new LocationService(locationManager);
                 }
             }
         }

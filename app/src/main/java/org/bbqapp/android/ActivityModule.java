@@ -25,9 +25,12 @@
 package org.bbqapp.android;
 
 import android.app.Activity;
+import android.content.Context;
+import android.location.LocationManager;
 
 import org.bbqapp.android.api.Api;
 import org.bbqapp.android.api.service.Places;
+import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.ui.CreateFragment;
 import org.bbqapp.android.ui.ListFragment;
 import org.bbqapp.android.ui.LoginFragment;
@@ -62,7 +65,20 @@ public class ActivityModule {
 
     @Provides
     @Singleton
+    @ActivityScope
+    Context provideActivityContext() {
+        return activity;
+    }
+
+    @Provides
+    @Singleton
     Places providePlaces() {
         return Api.get(Places.class);
+    }
+
+    @Provides
+    @Singleton
+    LocationService provideLocationService(LocationManager locationManager) {
+        return LocationService.getService(locationManager);
     }
 }

@@ -24,35 +24,17 @@
 
 package org.bbqapp.android;
 
-import android.content.Context;
-import android.location.LocationManager;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-import javax.inject.Singleton;
-
-import dagger.Module;
-import dagger.Provides;
+import javax.inject.Qualifier;
 
 /**
- * Application module to hold global states
+ * Should be used to obtain object in activity context
  */
-@Module(library = true)
-public class AppModule {
-    private final App app;
-
-    AppModule(App app) {
-        this.app = app;
-    }
-
-    @Provides
-    @Singleton
-    @ApplicationScope
-    Context provideApplicationContext() {
-        return app;
-    }
-
-    @Provides
-    @Singleton
-    LocationManager provideLocationManager() {
-        return (LocationManager) app.getSystemService(Context.LOCATION_SERVICE);
-    }
+@Qualifier
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+public @interface ActivityScope {
 }
