@@ -24,18 +24,27 @@
 
 package org.bbqapp.android;
 
-import android.app.Fragment;
-import android.os.Bundle;
+import android.content.Context;
 
-import org.bbqapp.android.ui.MainActivity;
+import javax.inject.Singleton;
+
+import dagger.Module;
+import dagger.Provides;
 
 /**
- * Base fragment for all fragments in application
+ * Application module to hold global states
  */
-public abstract class BaseFragment extends Fragment {
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        ((MainActivity) getActivity()).inject(this);
+@Module(library = true)
+public class AppModule {
+    private final App app;
+
+    AppModule(App app) {
+        this.app = app;
+    }
+
+    @Provides
+    @Singleton
+    Context provideContext() {
+        return app;
     }
 }

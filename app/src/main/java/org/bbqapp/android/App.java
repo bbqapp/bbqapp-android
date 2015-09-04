@@ -24,18 +24,25 @@
 
 package org.bbqapp.android;
 
-import android.app.Fragment;
-import android.os.Bundle;
+import android.app.Application;
 
-import org.bbqapp.android.ui.MainActivity;
+import dagger.ObjectGraph;
 
 /**
- * Base fragment for all fragments in application
+ * Application to maintain global states
  */
-public abstract class BaseFragment extends Fragment {
+public class App extends Application {
+    public ObjectGraph objectGraph;
+
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        ((MainActivity) getActivity()).inject(this);
+    public void onCreate() {
+        super.onCreate();
+
+        AppModule module = new AppModule(this);
+        objectGraph = ObjectGraph.create(module);
+    }
+
+    public ObjectGraph getObjectGraph() {
+        return objectGraph;
     }
 }

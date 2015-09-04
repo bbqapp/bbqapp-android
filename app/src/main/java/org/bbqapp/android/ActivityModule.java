@@ -24,18 +24,45 @@
 
 package org.bbqapp.android;
 
-import android.app.Fragment;
-import android.os.Bundle;
+import android.app.Activity;
 
+import org.bbqapp.android.api.Api;
+import org.bbqapp.android.api.service.Places;
+import org.bbqapp.android.ui.CreateFragment;
+import org.bbqapp.android.ui.ListFragment;
+import org.bbqapp.android.ui.LoginFragment;
 import org.bbqapp.android.ui.MainActivity;
+import org.bbqapp.android.ui.MapFragment;
+
+import javax.inject.Singleton;
+
+import dagger.Module;
+import dagger.Provides;
 
 /**
- * Base fragment for all fragments in application
+ * Module for all activities and for all its fragments
  */
-public abstract class BaseFragment extends Fragment {
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        ((MainActivity) getActivity()).inject(this);
+@Module(
+        injects = {
+                MainActivity.class,
+                CreateFragment.class,
+                ListFragment.class,
+                LoginFragment.class,
+                MapFragment.class,
+        },
+        addsTo = AppModule.class,
+        library = true
+)
+public class ActivityModule {
+    private final Activity activity;
+
+    public ActivityModule(Activity activity) {
+        this.activity = activity;
+    }
+
+    @Provides
+    @Singleton
+    Places providePlaces() {
+        return Api.get(Places.class);
     }
 }
