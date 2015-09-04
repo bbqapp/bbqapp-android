@@ -52,7 +52,7 @@ public class AppModule {
 
     @Provides
     @Singleton
-    LocationManager provideLocationManager() {
-        return (LocationManager) app.getSystemService(Context.LOCATION_SERVICE);
+    LocationManager provideLocationManager(@ApplicationScope Context context) {
+        return (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
     }
 }

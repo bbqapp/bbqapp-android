@@ -27,9 +27,11 @@ package org.bbqapp.android;
 import android.app.Activity;
 import android.content.Context;
 import android.location.LocationManager;
+import android.view.LayoutInflater;
 
 import org.bbqapp.android.api.Api;
 import org.bbqapp.android.api.service.Places;
+import org.bbqapp.android.geocoding.AsyncGeocoder;
 import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.ui.CreateFragment;
 import org.bbqapp.android.ui.ListFragment;
@@ -72,6 +74,12 @@ public class ActivityModule {
 
     @Provides
     @Singleton
+    LayoutInflater provideLayoutInflater(@ActivityScope Context context) {
+        return (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    }
+
+    @Provides
+    @Singleton
     Places providePlaces() {
         return Api.get(Places.class);
     }
@@ -80,5 +88,11 @@ public class ActivityModule {
     @Singleton
     LocationService provideLocationService(LocationManager locationManager) {
         return LocationService.getService(locationManager);
+    }
+
+    @Provides
+    @Singleton
+    AsyncGeocoder provideAsyncGeocoder(@ActivityScope Context context) {
+        return AsyncGeocoder.getInstance(context);
     }
 }

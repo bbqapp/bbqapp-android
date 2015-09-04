@@ -79,7 +79,7 @@ class AsyncResolver extends AsyncTask<Void, Void, Void> {
                 address = addresses.get(0);
             }
         } catch (IllegalArgumentException cause) {
-            cause = cause;
+            this.cause = cause;
         } catch (IOException cause) {
             this.cause = cause;
         }
