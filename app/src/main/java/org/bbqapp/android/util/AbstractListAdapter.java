@@ -33,8 +33,10 @@ import android.widget.ListAdapter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Abstract {@link ListAdapter} implementation
@@ -46,6 +48,8 @@ public abstract class AbstractListAdapter<T> implements ListAdapter {
     private static final String TAG = AbstractListAdapter.class.getName();
 
     private Collection<DataSetObserver> observers = new HashSet<>();
+
+    private Map<Object, Integer> itemViewTypeMapping = new HashMap<>();
 
     @Override
     public boolean areAllItemsEnabled() {
@@ -81,6 +85,8 @@ public abstract class AbstractListAdapter<T> implements ListAdapter {
      * Gets called when all data invalidated
      */
     protected void onInvalidated() {
+        itemViewTypeMapping.clear();
+
         for (DataSetObserver observer : observers) {
             try {
                 observer.onInvalidated();
@@ -137,7 +143,14 @@ public abstract class AbstractListAdapter<T> implements ListAdapter {
 
     @Override
     public final int getItemViewType(int position) {
-        return getItemViewType(getItem(position));
+        Object itemViewType = getItemViewType(getItem(position));
+
+        Integer type = itemViewTypeMapping.get(itemViewType);
+        if (type == null) {
+            type = itemViewTypeMapping.size();
+            itemViewTypeMapping.put(itemViewType, type);
+        }
+        return type;
     }
 
     /**
@@ -146,8 +159,8 @@ public abstract class AbstractListAdapter<T> implements ListAdapter {
      * @param item item
      * @return type of the item
      */
-    public int getItemViewType(T item) {
-        return 0;
+    public Object getItemViewType(T item) {
+        return null;
     }
 
     @Override
