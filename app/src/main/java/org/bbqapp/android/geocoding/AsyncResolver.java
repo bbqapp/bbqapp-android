@@ -78,9 +78,7 @@ class AsyncResolver extends AsyncTask<Void, Void, Void> {
             if (!addresses.isEmpty()) {
                 address = addresses.get(0);
             }
-        } catch (IllegalArgumentException cause) {
-            this.cause = cause;
-        } catch (IOException cause) {
+        } catch (IllegalArgumentException | IOException cause) {
             this.cause = cause;
         }
         return null;

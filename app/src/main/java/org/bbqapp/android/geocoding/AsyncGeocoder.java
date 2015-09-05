@@ -53,9 +53,6 @@ public final class AsyncGeocoder {
         return instance;
     }
 
-    private AsyncGeocoder() {
-    }
-
     public void resolve(double latitude, double longitude, Callback callback) {
         new AsyncResolver(latitude, longitude, callback, context).execute();
     }
