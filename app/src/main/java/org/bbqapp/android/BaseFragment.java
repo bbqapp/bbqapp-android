@@ -29,6 +29,9 @@ import android.os.Bundle;
 
 import org.bbqapp.android.ui.MainActivity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Base fragment for all fragments in application
  */
@@ -36,6 +39,15 @@ public abstract class BaseFragment extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        ((MainActivity) getActivity()).inject(this);
+        ((MainActivity) getActivity()).getObjectGraph().plus(getModules().toArray()).inject(this);
+    }
+
+    /**
+     * Returns extensible list of modules of this fragment
+     *
+     * @return list of modules
+     */
+    protected List<Object> getModules() {
+        return new ArrayList<>();
     }
 }
