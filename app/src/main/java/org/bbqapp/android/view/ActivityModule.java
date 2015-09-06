@@ -22,23 +22,25 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android;
+package org.bbqapp.android.view;
 
 import android.app.Activity;
 import android.content.Context;
 import android.location.LocationManager;
 import android.view.LayoutInflater;
 
+import org.bbqapp.android.AppModule;
 import org.bbqapp.android.api.Api;
 import org.bbqapp.android.api.service.Places;
 import org.bbqapp.android.geocoding.AsyncGeocoder;
 import org.bbqapp.android.service.LocationService;
-import org.bbqapp.android.ui.CreateFragment;
-import org.bbqapp.android.ui.ListFragment;
-import org.bbqapp.android.ui.LoginFragment;
-import org.bbqapp.android.ui.MainActivity;
-import org.bbqapp.android.ui.MapFragment;
+import org.bbqapp.android.view.login.LoginFragment;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
+import javax.inject.Qualifier;
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -53,12 +55,21 @@ import dagger.Provides;
                 CreateFragment.class,
                 ListFragment.class,
                 LoginFragment.class,
-                MapFragment.class,
+                //MapFragment.class,
         },
         addsTo = AppModule.class,
         library = true
 )
 public class ActivityModule {
+    /**
+     * Should be used to obtain object in activity context
+     */
+    @Qualifier
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface ModuleContext {
+    }
+
     private final Activity activity;
 
     public ActivityModule(Activity activity) {
@@ -67,14 +78,14 @@ public class ActivityModule {
 
     @Provides
     @Singleton
-    @ActivityScope
+    @ModuleContext
     Context provideActivityContext() {
         return activity;
     }
 
     @Provides
     @Singleton
-    LayoutInflater provideLayoutInflater(@ActivityScope Context context) {
+    LayoutInflater provideLayoutInflater(@ModuleContext Context context) {
         return (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
@@ -92,7 +103,7 @@ public class ActivityModule {
 
     @Provides
     @Singleton
-    AsyncGeocoder provideAsyncGeocoder(@ActivityScope Context context) {
+    AsyncGeocoder provideAsyncGeocoder(@ModuleContext Context context) {
         return AsyncGeocoder.getInstance(context);
     }
 }

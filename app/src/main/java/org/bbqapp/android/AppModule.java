@@ -27,6 +27,11 @@ package org.bbqapp.android;
 import android.content.Context;
 import android.location.LocationManager;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
+import javax.inject.Qualifier;
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -37,6 +42,16 @@ import dagger.Provides;
  */
 @Module(library = true)
 public class AppModule {
+    /**
+     * Should be used to obtain object in application context
+     */
+    @Qualifier
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface ModuleContext {
+    }
+
+
     private final App app;
 
     AppModule(App app) {
@@ -45,14 +60,14 @@ public class AppModule {
 
     @Provides
     @Singleton
-    @ApplicationScope
+    @ModuleContext
     Context provideApplicationContext() {
         return app;
     }
 
     @Provides
     @Singleton
-    LocationManager provideLocationManager(@ApplicationScope Context context) {
+    LocationManager provideLocationManager(@ModuleContext Context context) {
         return (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
     }
 }

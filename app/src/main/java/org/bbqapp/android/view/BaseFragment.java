@@ -22,12 +22,10 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android;
+package org.bbqapp.android.view;
 
 import android.app.Fragment;
 import android.os.Bundle;
-
-import org.bbqapp.android.ui.MainActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +43,7 @@ public abstract class BaseFragment extends Fragment {
     /**
      * Returns extensible list of modules of this fragment
      *
-     * @return list of modules
+     * @return list of modulesgit add
      */
     protected List<Object> getModules() {
         return new ArrayList<>();
