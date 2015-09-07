@@ -34,6 +34,7 @@ import org.bbqapp.android.api.Api;
 import org.bbqapp.android.api.service.Places;
 import org.bbqapp.android.geocoding.AsyncGeocoder;
 import org.bbqapp.android.service.LocationService;
+import org.bbqapp.android.view.list.ListFragment;
 import org.bbqapp.android.view.login.LoginFragment;
 
 import java.lang.annotation.Documented;
