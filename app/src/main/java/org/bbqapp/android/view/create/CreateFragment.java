@@ -1,0 +1,260 @@
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 bbqapp
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+package org.bbqapp.android.view.create;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.location.Address;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import org.bbqapp.android.R;
+import org.bbqapp.android.api.model.Id;
+import org.bbqapp.android.api.model.Picture;
+import org.bbqapp.android.api.model.Place;
+import org.bbqapp.android.api.model.Point;
+import org.bbqapp.android.api.service.Places;
+import org.bbqapp.android.geocoding.AsyncGeocoder;
+import org.bbqapp.android.service.LocationService;
+import org.bbqapp.android.view.BaseFragment;
+
+import java.io.File;
+import java.io.IOException;
+
+import javax.inject.Inject;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
+/**
+ * Fragment to create new places
+ */
+public class CreateFragment extends BaseFragment {
+    private static final String TAG = CreateFragment.class.getName();
+
+    private static final int TAKE_PICTURE_REQUEST_CODE = 1;
+
+    private View view;
+
+    @Bind(R.id.view_create_take_picture) Button takePictureButton;
+    @Bind(R.id.view_create_create) Button createButton;
+    @Bind(R.id.view_create_picture) ImageView imageView;
+    @Bind(R.id.view_create_progress_bar) ProgressBar progressBar;
+    @Bind(R.id.view_create_progress_text) TextView progressText;
+    @Bind(R.id.view_create_location) EditText locationEditText;
+    @Bind(R.id.view_create_address) TextView addressText;
+
+    private File image = null;
+
+    @Inject
+    AsyncGeocoder asyncGeocoder;
+
+    @Inject
+    LocationService locationService;
+
+    @Inject
+    Places placesEP;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        if (view == null) {
+            view = inflater.inflate(R.layout.view_create, container, false);
+            ButterKnife.bind(this, view);
+        }
+
+        return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        getActivity().setTitle(R.string.menu_create);
+
+        android.location.Location location = locationService.getLocation();
+        locationEditText.setText(new Point(location).toString());
+
+        asyncGeocoder.resolve(location, new AsyncGeocoder.Callback() {
+            @Override
+            public void onSuccess(Address address) {
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < address.getMaxAddressLineIndex(); i++) {
+                    sb.append(address.getAddressLine(i));
+                    sb.append("\n");
+                }
+                sb.deleteCharAt(sb.length() - 1);
+
+                addressText.setText(sb.toString());
+            }
+
+            @Override
+            public void onFailure(Exception cause) {
+                addressText.setText(cause.getLocalizedMessage());
+            }
+        });
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        ButterKnife.unbind(this);
+        view = null;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case TAKE_PICTURE_REQUEST_CODE:
+                try {
+                    onTakePictureResponse(resultCode);
+                } catch (IOException e) {
+                    Log.w(TAG, e.getMessage());
+                }
+                break;
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    private void showMessage(final String message) {
+        final Activity activity = getActivity();
+
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
+    private void setProgress(final String msg, final Integer progress) {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    String dspMsg = msg;
+                    if (progress != null) {
+                        progressBar.setIndeterminate(false);
+                        progressBar.setProgress(progress);
+                        dspMsg += " " + progress + "%";
+                    } else {
+                        progressBar.setIndeterminate(true);
+                    }
+                    progressText.setText(dspMsg);
+                }
+            });
+        }
+    }
+
+    @OnClick(R.id.view_create_take_picture)
+    protected void takePicture() {
+        File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+
+        try {
+            image = dir.createTempFile("takePicture_", ".jpg", dir);
+
+            Log.i(TAG, "take picture to: " + Uri.fromFile(image));
+
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(image));
+            startActivityForResult(intent, TAKE_PICTURE_REQUEST_CODE);
+
+        } catch (IOException e) {
+            showMessage(e.getLocalizedMessage());
+        }
+    }
+
+    private void onTakePictureResponse(int resultCode) throws IOException {
+        if (resultCode == Activity.RESULT_OK && image != null) {
+
+            Uri imageUri = Uri.fromFile(image);
+
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inSampleSize = 5;// > 1
+            Bitmap imageBitmap = BitmapFactory.decodeFile(image.getAbsolutePath(), options);
+            imageView.setImageBitmap(imageBitmap);
+            Log.i(TAG, "onTakePictureResponse, image saved to: " + imageUri);
+        }
+    }
+
+    @OnClick(R.id.view_create_create)
+    protected void create() {
+        Point location = new Point(locationEditText.getText().toString());
+
+        final Place place = new Place();
+        place.setLocation(location);
+
+        setProgress("Preparing...", null);
+
+        new AsyncTask<Void, Void, Void>() {
+
+            @Override
+            protected Void doInBackground(Void... params) {
+                Id placeResponse = placesEP.postPlace(place);
+                setProgress("Place Created: " + placeResponse.getId(), null);
+
+                if (image == null) {
+                    return null;
+                }
+
+                try {
+                    Id imageResponse = placesEP.postPicture(placeResponse.getId(), new Picture(image) {
+                        @Override
+                        public void onProgress(long contentLength, long transferred) {
+                            int percent = (int) (transferred / (contentLength / 100));
+                            setProgress("Upload image...", percent);
+                        }
+                    });
+                    setProgress("Image uploaded: " + imageResponse.getId(), 100);
+                } catch (IOException e) {
+                    showMessage("Could not upload place picture");
+                    setProgress("Could not upload place picture", null);
+                    Log.e(TAG, "Could not upload place picture", e);
+                }
+
+                return null;
+            }
+        }.execute();
+    }
+
+}
