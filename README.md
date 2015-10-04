@@ -11,7 +11,7 @@ The Android client implementation of bbqapp
 1. Start Android Studio
 2. Click 'Configure' and select 'SDK Manager'
 3. Select following SDK Platforms:
-  * API Level 15
+  * API Level 17
   * API Level 23
 4. Select folowing SDK Tools:
   * Google Play Services
