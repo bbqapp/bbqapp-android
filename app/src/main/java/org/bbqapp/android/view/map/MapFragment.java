@@ -94,7 +94,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
             view.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
 
             com.google.android.gms.maps.MapFragment mapFragment = (com.google.android.gms.maps.MapFragment)
-                    getFragmentManager().findFragmentById(R.id.map);
+                    getChildFragmentManager().findFragmentById(R.id.google_map);
             mapFragment.getMapAsync(this);
         }
         return view;
