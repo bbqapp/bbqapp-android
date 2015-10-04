@@ -7,7 +7,7 @@ The Android client implementation of bbqapp
 * Google USB Driver if necessary (Windows only)
 * Git
 
-## Configure Anroid Studio
+## Configure Android Studio
 1. Start Android Studio
 2. Click 'Configure' and select 'SDK Manager'
 3. Select following SDK Platforms:
@@ -23,7 +23,7 @@ The Android client implementation of bbqapp
 ## Import project
 1. Start Android Studio
 2. Klick on 'Checkout project from Version Control' and select Github
-3. Sign in GitHub
+3. Sign in into GitHub
 4. Enter/Select https://github.com/bbqapp/bbqapp-android.git and specify target directory
 5. Click 'Clone'
 6. In 'Import Project from gradle' dialog use default gradle wrapper and click 'OK'
