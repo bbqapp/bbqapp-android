@@ -25,15 +25,15 @@
 package org.bbqapp.android.api;
 
 /**
- * Callback interface to notify about progress changes
+ * AuthCallback interface to notify about progress changes
  */
 public interface ProgressListener {
 
     /**
      * Called periodically when on progress changes
      *
-     * @param contentLength      content length of body (-1 if unknown)
-     * @param transferred bytes transferred
+     * @param contentLength content length of body (-1 if unknown)
+     * @param transferred   bytes transferred
      */
     void onProgress(long contentLength, long transferred);
 }

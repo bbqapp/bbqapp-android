@@ -22,26 +22,47 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android.view.map;
+package org.bbqapp.android.auth;
 
-import android.app.Activity;
-
-import org.bbqapp.android.view.ActivityModule;
-
-import dagger.Module;
-import dagger.Provides;
+import android.preference.PreferenceManager;
 
 /**
- *
+ * Interface for all auth service like g+, facebook, ...
  */
-@Module(
-        addsTo = ActivityModule.class,
-        injects = MapFragment.class
-)
-public class MapFragmentModule {
+public interface AuthService extends PreferenceManager.OnActivityResultListener {
 
-    @Provides
-    PlaceClusterManager providePlaceClusterManager(@ActivityModule.ModuleContext Activity context) {
-        return new PlaceClusterManager(context);
-    }
+    /**
+     * Returns id of service provider
+     * @return
+     */
+    String getId();
+
+    /**
+     * Initialize sdk but without login
+     */
+    void init();
+
+    /**
+     * Initialize sdk with login
+     * @param callback callback to call
+     */
+    void init(AuthCallback callback);
+
+    /**
+     * Performs login
+     * @param callback callback to call
+     */
+    void login(AuthCallback callback);
+
+    /**
+     * Performs logout
+     * @param callback callback to call
+     */
+    void logout(AuthCallback callback);
+
+    /**
+     * Determines if some operation currently in progress
+     * @return {@code true} if service is currently busy {@code false} otherwise
+     */
+    boolean isBusy();
 }

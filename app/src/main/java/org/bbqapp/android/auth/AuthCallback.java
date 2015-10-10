@@ -22,26 +22,12 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android.view.map;
+package org.bbqapp.android.auth;
 
-import android.app.Activity;
+public interface AuthCallback {
+    void onSuccess(AuthData authData);
 
-import org.bbqapp.android.view.ActivityModule;
+    void onCancel();
 
-import dagger.Module;
-import dagger.Provides;
-
-/**
- *
- */
-@Module(
-        addsTo = ActivityModule.class,
-        injects = MapFragment.class
-)
-public class MapFragmentModule {
-
-    @Provides
-    PlaceClusterManager providePlaceClusterManager(@ActivityModule.ModuleContext Activity context) {
-        return new PlaceClusterManager(context);
-    }
+    void onError(Exception cause);
 }

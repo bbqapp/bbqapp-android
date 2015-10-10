@@ -22,26 +22,36 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android.view.map;
-
-import android.app.Activity;
-
-import org.bbqapp.android.view.ActivityModule;
-
-import dagger.Module;
-import dagger.Provides;
+package org.bbqapp.android.auth;
 
 /**
- *
+ * Holder of authentication information
  */
-@Module(
-        addsTo = ActivityModule.class,
-        injects = MapFragment.class
-)
-public class MapFragmentModule {
+public class AuthData {
+    private String authServiceId;
+    private String token;
+    private String displayName;
 
-    @Provides
-    PlaceClusterManager providePlaceClusterManager(@ActivityModule.ModuleContext Activity context) {
-        return new PlaceClusterManager(context);
+    AuthData(String authServiceId, String token, String displayName) {
+        this.authServiceId = authServiceId;
+        this.token = token;
+        this.displayName = displayName;
+    }
+
+    public String getAuthServiceId() {
+        return authServiceId;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    @Override
+    public final String toString() {
+        return super.toString();
     }
 }

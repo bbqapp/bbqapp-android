@@ -24,37 +24,40 @@
 
 package org.bbqapp.android.view.login;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.content.IntentSender;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.plus.Plus;
+import com.google.android.gms.common.SignInButton;
 
 import org.bbqapp.android.R;
+import org.bbqapp.android.auth.AuthCallback;
+import org.bbqapp.android.auth.AuthData;
+import org.bbqapp.android.auth.GooglePlus;
 import org.bbqapp.android.view.BaseFragment;
 
+import javax.inject.Inject;
+
+import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 /**
  * Fragment for user login operations
  */
-public class LoginFragment extends BaseFragment implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient
-        .OnConnectionFailedListener {
+public class LoginFragment extends BaseFragment {
 
     private static final String TAG = LoginFragment.class.getName();
-    public static final int PLUS_RESOLUTION_REQUEST_CODE = 154;
 
-    private GoogleApiClient googleApiClient;
+    @Bind(R.id.google_login_button)
+    SignInButton googleLoginButton;
+
+    @Inject
+    GooglePlus googlePlus;
+
+    private AuthData authData;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -68,25 +71,14 @@ public class LoginFragment extends BaseFragment implements GoogleApiClient.Conne
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        googleApiClient = new GoogleApiClient.Builder(getActivity())
-                .addApi(Plus.API)
-                .addScope(Plus.SCOPE_PLUS_LOGIN)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
+    public void onResume() {
+        super.onResume();
         getActivity().setTitle(R.string.menu_login);
-    }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-
-        googleApiClient.disconnect();
+        googlePlus.init();
     }
 
     @Override
@@ -97,43 +89,38 @@ public class LoginFragment extends BaseFragment implements GoogleApiClient.Conne
 
     @OnClick(R.id.google_login_button)
     protected void onGoogleLoginButtonClick() {
-        googleApiClient.connect();
-    }
-
-    @Override
-    public void onConnected(Bundle bundle) {
-        String accountName = Plus.PeopleApi.getCurrentPerson(googleApiClient).getDisplayName();
-        Toast.makeText(getActivity(), accountName + " is logged in.", Toast.LENGTH_LONG).show();
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        Log.i(TAG, "onConnectionSuspended(" + i + ")");
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        if (connectionResult.hasResolution()) {
-            try {
-                connectionResult.startResolutionForResult(getActivity(), PLUS_RESOLUTION_REQUEST_CODE);
-            } catch (IntentSender.SendIntentException e) {
-                googleApiClient.connect();
+        AuthCallback authCallback = new AuthCallback() {
+            @Override
+            public void onSuccess(AuthData authData) {
+                LoginFragment.this.authData = authData;
+                String msg = authData != null ? authData.getDisplayName() + " is logged in." : "logged out.";
+                Toast.makeText(getActivity(), msg, Toast.LENGTH_LONG).show();
+                onFinish();
             }
+
+            @Override
+            public void onCancel() {
+                Toast.makeText(getActivity(), "login cancelled", Toast.LENGTH_LONG).show();
+                onFinish();
+            }
+
+            @Override
+            public void onError(Exception cause) {
+                Toast.makeText(getActivity(), "Error occurred during authorization", Toast.LENGTH_LONG).show();
+                onFinish();
+            }
+
+            void onFinish() {
+                googleLoginButton.setEnabled(true);
+            }
+        };
+
+        googleLoginButton.setEnabled(false);
+
+        if (authData == null) {
+            googlePlus.login(authCallback);
         } else {
-            GooglePlayServicesUtil.getErrorDialog(connectionResult.getErrorCode(), getActivity(), 0).show();
-        }
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == PLUS_RESOLUTION_REQUEST_CODE) {
-            if (resultCode == Activity.RESULT_OK) {
-                googleApiClient.connect();
-            } else {
-                Log.i(TAG, "onActivityResult: " + resultCode);
-            }
+            googlePlus.logout(authCallback);
         }
     }
 }

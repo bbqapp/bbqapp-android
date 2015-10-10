@@ -32,6 +32,7 @@ import android.view.LayoutInflater;
 import org.bbqapp.android.AppModule;
 import org.bbqapp.android.api.Api;
 import org.bbqapp.android.api.service.Places;
+import org.bbqapp.android.auth.GooglePlus;
 import org.bbqapp.android.geocoding.AsyncGeocoder;
 import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.view.create.CreateFragment;
@@ -81,13 +82,13 @@ public class ActivityModule {
     @Provides
     @Singleton
     @ModuleContext
-    Context provideActivityContext() {
+    Activity provideActivity() {
         return activity;
     }
 
     @Provides
     @Singleton
-    LayoutInflater provideLayoutInflater(@ModuleContext Context context) {
+    LayoutInflater provideLayoutInflater(@ModuleContext Activity context) {
         return (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
@@ -105,7 +106,13 @@ public class ActivityModule {
 
     @Provides
     @Singleton
-    AsyncGeocoder provideAsyncGeocoder(@ModuleContext Context context) {
+    AsyncGeocoder provideAsyncGeocoder(@ModuleContext Activity context) {
         return AsyncGeocoder.getInstance(context);
+    }
+
+    @Provides
+    @Singleton
+    GooglePlus provideGooglePlus(@ModuleContext Activity activity) {
+        return new GooglePlus(activity);
     }
 }

@@ -42,6 +42,7 @@ import com.facebook.FacebookSdk;
 import org.bbqapp.android.App;
 import org.bbqapp.android.BuildConfig;
 import org.bbqapp.android.R;
+import org.bbqapp.android.auth.GooglePlus;
 import org.bbqapp.android.view.create.CreateFragment;
 import org.bbqapp.android.view.list.ListFragment;
 import org.bbqapp.android.view.login.LoginFragment;
@@ -64,16 +65,16 @@ public class MainActivity extends AppCompatActivity {
     private ActionBarDrawerToggle menuToggle;
     private MenuAdapter menuListAdapter;
 
-    // last fragment
-    private Fragment fragment;
-
     private ObjectGraph objectGraph;
 
-    private enum Views {
+    @Inject
+    GooglePlus googlePlus;
+
+    private enum View {
         LOGIN, MAP, LIST, SEARCH, CREATE, SETTINGS, CONTACT, NOTICE, FOOTER;
     }
 
-    private Map<MenuAdapter.Entry, Views> menuEntries = new HashMap<>();
+    private Map<MenuAdapter.Entry, View> menuEntries = new HashMap<>();
 
     @Inject
     LayoutInflater inflater;
@@ -106,16 +107,16 @@ public class MainActivity extends AppCompatActivity {
         // list view
         ListView menuList = (ListView) findViewById(R.id.menu_list);
         menuListAdapter = new MenuAdapter(inflater, menuList);
-        menuEntries.put(menuListAdapter.addHeader(getCaption(Views.LOGIN)), Views.LOGIN);
-        menuEntries.put(menuListAdapter.add(getCaption(Views.MAP)), Views.MAP);
-        menuEntries.put(menuListAdapter.add(getCaption(Views.LIST)), Views.LIST);
-        menuEntries.put(menuListAdapter.add(getCaption(Views.SEARCH)), Views.SEARCH);
-        menuEntries.put(menuListAdapter.add(getCaption(Views.CREATE)), Views.CREATE);
+        menuEntries.put(menuListAdapter.addHeader(getCaption(View.LOGIN)), View.LOGIN);
+        menuEntries.put(menuListAdapter.add(getCaption(View.MAP)), View.MAP);
+        menuEntries.put(menuListAdapter.add(getCaption(View.LIST)), View.LIST);
+        menuEntries.put(menuListAdapter.add(getCaption(View.SEARCH)), View.SEARCH);
+        menuEntries.put(menuListAdapter.add(getCaption(View.CREATE)), View.CREATE);
         menuListAdapter.add();
-        menuEntries.put(menuListAdapter.add(getCaption(Views.SETTINGS)), Views.SETTINGS);
-        menuEntries.put(menuListAdapter.add(getCaption(Views.CONTACT)), Views.CONTACT);
-        menuEntries.put(menuListAdapter.add(getCaption(Views.NOTICE)), Views.NOTICE);
-        menuEntries.put(menuListAdapter.addFooter(BuildConfig.VERSION_NAME), Views.FOOTER);
+        menuEntries.put(menuListAdapter.add(getCaption(View.SETTINGS)), View.SETTINGS);
+        menuEntries.put(menuListAdapter.add(getCaption(View.CONTACT)), View.CONTACT);
+        menuEntries.put(menuListAdapter.add(getCaption(View.NOTICE)), View.NOTICE);
+        menuEntries.put(menuListAdapter.addFooter(BuildConfig.VERSION_NAME), View.FOOTER);
         menuListAdapter.setOnEntryClickListener(new MenuAdapter.OnEntryClickListener() {
             @Override
             public void onEntryClick(ListView listView, MenuAdapter.Entry entry, int position, long id) {
@@ -126,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
 
         Fragment fragment = getFragmentManager().findFragmentById(R.id.content_frame);
         if (fragment == null) {
-            navigateTo(Views.MAP, false);
+            navigateTo(View.MAP, false);
         }
     }
 
@@ -143,20 +144,20 @@ public class MainActivity extends AppCompatActivity {
         FacebookSdk.sdkInitialize(this);
     }
 
-    protected String getCaption(Views view) {
+    protected String getCaption(View view) {
         int id = getResources().getIdentifier("menu_" + view.toString().toLowerCase(), "string", getPackageName());
         return id > 0 ? (String) getResources().getText(id) : view.name();
     }
 
-    public void navigateTo(Views view) {
+    public void navigateTo(View view) {
         navigateTo(view, true);
     }
 
-    public void navigateTo(Views view, boolean addToBackStack) {
+    public void navigateTo(View view, boolean addToBackStack) {
         menu.closeDrawers();
 
         // inflate new view
-        fragment = getFragmentManager().findFragmentByTag(view.name());
+        Fragment fragment = findFragmentByView(view);
         if (fragment == null) {
             switch (view) {
                 case LOGIN:
@@ -188,6 +189,15 @@ public class MainActivity extends AppCompatActivity {
         fragmentTransaction.commit();
     }
 
+    /**
+     * Finds a fragment by view
+     * @param view fragment of view to find
+     * @return found fragment or {@code null} otherwise
+     */
+    private Fragment findFragmentByView(View view) {
+        return getFragmentManager().findFragmentByTag(view.name());
+    }
+
     @Override
     public void onBackPressed() {
         FragmentManager fragmentManager = getFragmentManager();
@@ -208,11 +218,16 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // TODO temp G+ login fix
         super.onActivityResult(requestCode, resultCode, data);
-        if (fragment != null) {
-            fragment.onActivityResult(requestCode, resultCode, data);
+        for(View view : View.values()) {
+            Fragment fragment = findFragmentByView(view);
+            if (fragment != null) {
+                fragment.onActivityResult(requestCode, resultCode, data);
+            }
         }
+
+        // auth services
+        googlePlus.onActivityResult(requestCode, resultCode, data);
     }
 
     public ObjectGraph getObjectGraph() {
