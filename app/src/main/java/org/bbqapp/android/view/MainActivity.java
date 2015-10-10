@@ -275,6 +275,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Subscribe
     public void onAuthCancel(AuthCancel authCancel) {
-        Toast.makeText(this, "login canceled.", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Login canceled.", Toast.LENGTH_LONG).show();
     }
 }

@@ -146,6 +146,16 @@ public class LoginManager implements AuthCallback, PreferenceManager.OnActivityR
         bus.post(authInit);
     }
 
+    public boolean isBusy() {
+        for (AuthService service : services.values()) {
+            if(service.isBusy()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     @Override
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
         for (AuthService service : services.values()) {

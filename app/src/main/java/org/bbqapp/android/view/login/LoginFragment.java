@@ -35,6 +35,10 @@ import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.common.SignInButton;
 
 import org.bbqapp.android.R;
+import org.bbqapp.android.auth.AuthCancel;
+import org.bbqapp.android.auth.AuthData;
+import org.bbqapp.android.auth.AuthError;
+import org.bbqapp.android.auth.AuthEvent;
 import org.bbqapp.android.auth.AuthInit;
 import org.bbqapp.android.auth.Facebook;
 import org.bbqapp.android.auth.GooglePlus;
@@ -45,12 +49,13 @@ import javax.inject.Inject;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import de.halfbit.tinybus.Subscribe;
 
 /**
  * Fragment for user login operations
  */
-public class LoginFragment extends BaseFragment {
+public class LoginFragment extends BaseFragment implements View.OnClickListener {
 
     private static final String TAG = LoginFragment.class.getName();
 
@@ -62,6 +67,11 @@ public class LoginFragment extends BaseFragment {
 
     @Bind(R.id.login_buttons)
     LinearLayout loginButtons;
+
+    @Bind(R.id.login_info)
+    LinearLayout loginInfo;
+
+    private boolean initialized = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -82,7 +92,10 @@ public class LoginFragment extends BaseFragment {
         super.onResume();
         getActivity().setTitle(R.string.menu_login);
 
-        loginManager.init();
+        loginButtons.setVisibility(View.GONE);
+        loginInfo.setVisibility(View.GONE);
+
+        initOrUpdate();
     }
 
     @Override
@@ -90,6 +103,8 @@ public class LoginFragment extends BaseFragment {
         super.onPause();
 
         loginButtons.removeAllViews();
+
+        initialized = false;
     }
 
     @Override
@@ -98,22 +113,42 @@ public class LoginFragment extends BaseFragment {
         ButterKnife.unbind(this);
     }
 
-    //@OnClick(R.id.google_login_button)
-    protected void onGoogleLoginButtonClick() {
-        if (loginManager.getLastAuthData() != null && loginManager.getLastAuthData().isLoggedIn()) {
-            loginManager.logout();
+    private void initOrUpdate() {
+        AuthData authData = loginManager.getLastAuthData();
+        boolean loggedIn = authData != null && authData.isLoggedIn();
+
+        if (!initialized && !loginManager.isBusy() && !loggedIn) {
+            initialized = true;
+            loginManager.init();
         } else {
-            loginManager.login(GooglePlus.ID);
+            loginButtons.setVisibility(loggedIn ? View.GONE : View.VISIBLE);
+            loginInfo.setVisibility(loggedIn ? View.VISIBLE : View.GONE);
         }
     }
 
-    //@OnClick(R.id.facebook_login_button)
-    protected void onFacebookLoginButtonClick() {
-        if (loginManager.getLastAuthData() != null && loginManager.getLastAuthData().isLoggedIn()) {
-            loginManager.logout();
-        } else {
-            loginManager.login(Facebook.ID);
-        }
+    @OnClick(R.id.logout_button)
+    protected void logout() {
+        loginManager.logout();
+    }
+
+    @Subscribe
+    public void onAuthEvent(AuthEvent authEvent) {
+        initOrUpdate();
+    }
+
+    @Subscribe
+    public void onAuthError(AuthError authError) {
+        onAuthEvent(authError);
+    }
+
+    @Subscribe
+    public void onAuthCancel(AuthCancel authCancel) {
+        onAuthEvent(authCancel);
+    }
+
+    @Subscribe
+    public void onAuthData(AuthData authData) {
+        onAuthEvent(authData);
     }
 
     @Subscribe
@@ -131,7 +166,19 @@ public class LoginFragment extends BaseFragment {
         }
 
         if (button != null) {
+            button.setOnClickListener(this);
             loginButtons.addView(button);
+        }
+
+        onAuthEvent(authInit);
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v instanceof SignInButton) {
+            loginManager.login(GooglePlus.ID);
+        } else if (v instanceof LoginButton) {
+            loginManager.login(Facebook.ID);
         }
     }
 }
