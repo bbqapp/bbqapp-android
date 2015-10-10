@@ -35,6 +35,7 @@ import android.graphics.Rect;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.clustering.Cluster;
@@ -66,15 +67,15 @@ class PlaceClusterManager {
         this.context = context;
     }
 
-    private ClusterManager<PlaceItem> manager;
+    private PlaceManager manager;
 
     private GoogleMap map;
 
     public void init(GoogleMap map) {
         this.map = map;
-        manager = new ClusterManager<>(context, map);
+        manager = new PlaceManager(context, map);
         manager.setRenderer(new PlaceRenderer(context, map, manager));
-        manager.setOnClusterClickListener(new ClusterItemClickListern());
+        manager.setOnClusterClickListener(new ClusterItemClickListener());
         map.setOnCameraChangeListener(manager);
         map.setOnMarkerClickListener(manager);
         map.setOnInfoWindowClickListener(manager);
@@ -90,6 +91,10 @@ class PlaceClusterManager {
         });
     }
 
+    public void setOnCameraChangeListener(GoogleMap.OnCameraChangeListener cameraChangeListener) {
+        manager.cameraChangeListener = cameraChangeListener;
+    }
+
     public void setPlaces(List<Place> places) {
         ArrayList<PlaceItem> markers = new ArrayList<>(places.size());
         manager.clearItems();
@@ -99,6 +104,24 @@ class PlaceClusterManager {
         }
 
         manager.addItems(markers);
+    }
+
+    private class PlaceManager extends ClusterManager<PlaceItem> {
+
+        private GoogleMap.OnCameraChangeListener cameraChangeListener;
+
+        public PlaceManager(Context context, GoogleMap map) {
+            super(context, map);
+        }
+
+        @Override
+        public void onCameraChange(CameraPosition cameraPosition) {
+            super.onCameraChange(cameraPosition);
+
+            if(cameraChangeListener != null) {
+                cameraChangeListener.onCameraChange(cameraPosition);
+            }
+        }
     }
 
     private class PlaceRenderer extends DefaultClusterRenderer<PlaceItem> {
@@ -161,7 +184,7 @@ class PlaceClusterManager {
         }
     }
 
-    private class ClusterItemClickListern implements ClusterManager.OnClusterClickListener<PlaceItem> {
+    private class ClusterItemClickListener implements ClusterManager.OnClusterClickListener<PlaceItem> {
         @Override
         public boolean onClusterClick(Cluster<PlaceItem> cluster) {
             map.animateCamera(CameraUpdateFactory.newLatLngZoom(cluster.getPosition(), 13));

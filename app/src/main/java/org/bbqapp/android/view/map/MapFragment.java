@@ -36,15 +36,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.bbqapp.android.R;
+import org.bbqapp.android.api.Callback;
+import org.bbqapp.android.api.exception.ApiException;
 import org.bbqapp.android.api.model.Picture;
 import org.bbqapp.android.api.model.PictureInfo;
 import org.bbqapp.android.api.model.Place;
@@ -62,7 +67,8 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 
 public class MapFragment extends BaseFragment implements OnMapReadyCallback, LocationSource, GoogleMap
-        .OnMapClickListener, LocationService.OnLocationListener, PlaceClusterManager.OnPlaceSelectionListener {
+        .OnMapClickListener, GoogleMap.OnCameraChangeListener, LocationService.OnLocationListener, PlaceClusterManager
+        .OnPlaceSelectionListener {
     private static final String TAG = MapFragment.class.getName();
 
     private GoogleMap map;
@@ -145,8 +151,9 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
 
         placeClusterManager.init(map);
         placeClusterManager.setOnPlaceClickListener(this);
+        placeClusterManager.setOnCameraChangeListener(this);
 
-        displayPlaces();
+        //displayPlaces();
     }
 
     @Override
@@ -176,25 +183,38 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
         view.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
     }
 
+    private long getRadius(LatLngBounds bounds) {
+        float[] results = new float[3];
+        Location.distanceBetween(bounds.northeast.latitude, bounds.northeast.longitude, bounds.southwest
+                .latitude, bounds.southwest.longitude, results);
+
+        return Math.round(results[0] + 1);
+
+    }
+
     private void displayPlaces() {
-        final Location l = locationService.getLocation();
+        LatLng target = map.getCameraPosition().target;
+        LatLngBounds bounds = map.getProjection().getVisibleRegion().latLngBounds;
+        long radius = getRadius(bounds);
+        displayPlaces(target, radius);
+    }
 
-        if (l == null) {
-            return;
-        }
+    private void displayPlaces(LatLng target, long radius) {
+        Log.i(TAG, "Request places at " + target + " with radius " + radius);
 
-        new AsyncTask<Void, Void, List<Place>>() {
-
-            @Override
-            protected List<Place> doInBackground(Void... params) {
-                return placesEP.getPlaces(l.getLatitude() + "," + l.getLongitude(), 10000);
-            }
+        placesEP.getPlaces(target.latitude + "," + target.longitude, radius, new Callback<List<Place>>() {
 
             @Override
-            protected void onPostExecute(List<Place> places) {
+            public void onSuccess(List<Place> places) {
+                Log.i(TAG, "Received " + places.size() + " places");
                 placeClusterManager.setPlaces(places);
             }
-        }.execute();
+
+            @Override
+            public void onFailure(ApiException cause) {
+                Toast.makeText(getActivity(), cause.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     public void setPlace(final Place place) {
@@ -238,5 +258,10 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
         view.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
         tx.setText(place.getId());
         setPlace(place);
+    }
+
+    @Override
+    public void onCameraChange(CameraPosition cameraPosition) {
+        displayPlaces();
     }
 }
