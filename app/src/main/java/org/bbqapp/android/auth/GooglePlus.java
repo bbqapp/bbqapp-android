@@ -37,6 +37,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.plus.Plus;
+import com.google.android.gms.plus.model.people.Person;
 
 import java.io.IOException;
 
@@ -75,14 +76,14 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
 
     @Override
     public void login(AuthCallback callback) {
-        setCallback(callback);
+        init(callback);
         operationLogin = true;
         googleApiClient.connect();
     }
 
     @Override
     public void logout(AuthCallback callback) {
-        setCallback(callback);
+        init(callback);
         operationLogin = false;
         googleApiClient.connect();
     }
@@ -94,7 +95,7 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
                 googleApiClient.connect();
             } else {
                 googleApiClient.disconnect();
-                onCancelled();
+                onCancelled(new AuthCancel());
             }
 
             return true;
@@ -105,7 +106,10 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
     @Override
     public void onConnected(Bundle bundle) {
         if (operationLogin) {
-            final String displayName = Plus.PeopleApi.getCurrentPerson(googleApiClient).getDisplayName();
+            Person person = Plus.PeopleApi.getCurrentPerson(googleApiClient);
+            final String displayName = person.getDisplayName();
+            final Person.Image image = person.getImage();
+            final String imageUrl = image.hasUrl() ? image.getUrl() : null;
             final String accountName = Plus.AccountApi.getAccountName(googleApiClient);
             new AsyncTask<Void, Void, Void>() {
                 AuthData authData;
@@ -115,7 +119,7 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
                 protected Void doInBackground(Void... params) {
                     try {
                         String token = GoogleAuthUtil.getToken(activity, accountName, "oauth2:" + Plus.SCOPE_PLUS_LOGIN);
-                        authData = new AuthData(getId(), token, displayName);
+                        authData = new AuthData(getId(), token, displayName, imageUrl);
                     } catch (IOException | GoogleAuthException e) {
                         cause = e;
                     }
@@ -128,7 +132,7 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
                     super.onPostExecute(aVoid);
 
                     if (cause != null) {
-                        onError(cause);
+                        onError(new AuthError(cause));
                     } else {
                         onSuccess(authData);
                     }
@@ -141,11 +145,11 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
                 public void onResult(Status status) {
                     googleApiClient.disconnect();
                     if (status.isSuccess()) {
-                        onSuccess(null);
+                        onSuccess(new AuthData(getId()));
                     } else if (status.isCanceled()) {
-                        onCancelled();
+                        onCancelled(new AuthCancel());
                     } else {
-                        onError(new Exception(status.getStatusMessage()));
+                        onError(new AuthError(status.getStatusMessage()));
                     }
                 }
             });
@@ -155,7 +159,7 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
     @Override
     public void onConnectionSuspended(int i) {
         googleApiClient.disconnect();
-        onError(new Exception("No connection"));
+        onError(new AuthError("No connection"));
     }
 
     @Override
@@ -168,7 +172,7 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
             }
         } else {
             googleApiClient.disconnect();
-            onError(new Exception(connectionResult.getErrorMessage()));
+            onError(new AuthError(connectionResult.getErrorMessage()));
             //GooglePlayServicesUtil.getErrorDialog(connectionResult.getErrorCode(), activity, 0).show();
         }
     }

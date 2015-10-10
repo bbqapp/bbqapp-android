@@ -28,15 +28,12 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.google.android.gms.common.SignInButton;
 
 import org.bbqapp.android.R;
-import org.bbqapp.android.auth.AuthCallback;
-import org.bbqapp.android.auth.AuthData;
-import org.bbqapp.android.auth.GooglePlus;
 import org.bbqapp.android.view.BaseFragment;
+import org.bbqapp.android.view.LoginManager;
 
 import javax.inject.Inject;
 
@@ -55,9 +52,7 @@ public class LoginFragment extends BaseFragment {
     SignInButton googleLoginButton;
 
     @Inject
-    GooglePlus googlePlus;
-
-    private AuthData authData;
+    LoginManager loginManager;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -77,8 +72,6 @@ public class LoginFragment extends BaseFragment {
     public void onResume() {
         super.onResume();
         getActivity().setTitle(R.string.menu_login);
-
-        googlePlus.init();
     }
 
     @Override
@@ -89,38 +82,10 @@ public class LoginFragment extends BaseFragment {
 
     @OnClick(R.id.google_login_button)
     protected void onGoogleLoginButtonClick() {
-        AuthCallback authCallback = new AuthCallback() {
-            @Override
-            public void onSuccess(AuthData authData) {
-                LoginFragment.this.authData = authData;
-                String msg = authData != null ? authData.getDisplayName() + " is logged in." : "logged out.";
-                Toast.makeText(getActivity(), msg, Toast.LENGTH_LONG).show();
-                onFinish();
-            }
-
-            @Override
-            public void onCancel() {
-                Toast.makeText(getActivity(), "login cancelled", Toast.LENGTH_LONG).show();
-                onFinish();
-            }
-
-            @Override
-            public void onError(Exception cause) {
-                Toast.makeText(getActivity(), "Error occurred during authorization", Toast.LENGTH_LONG).show();
-                onFinish();
-            }
-
-            void onFinish() {
-                googleLoginButton.setEnabled(true);
-            }
-        };
-
-        googleLoginButton.setEnabled(false);
-
-        if (authData == null) {
-            googlePlus.login(authCallback);
+        if (loginManager.getLastAuthData() != null && loginManager.getLastAuthData().isLoggedIn()) {
+            loginManager.logout();
         } else {
-            googlePlus.logout(authCallback);
+            loginManager.login("plus");
         }
     }
 }

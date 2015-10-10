@@ -38,6 +38,7 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
 
+        // dagger
         AppModule module = new AppModule(this);
         objectGraph = ObjectGraph.create(module);
     }

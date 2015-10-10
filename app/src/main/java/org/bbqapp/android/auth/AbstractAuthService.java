@@ -29,25 +29,30 @@ package org.bbqapp.android.auth;
  */
 abstract class AbstractAuthService implements AuthService {
     private AuthCallback authCallback = null;
+    private boolean initialized = false;
     private Object lock = new Object();
 
-    @Override
     public void init(AuthCallback callback) {
         setCallback(callback);
         init();
-        login(callback);
+        initialized = true;
     }
 
-    final void onError(Exception cause) {
+    @Override
+    public boolean isInitialized() {
+        return initialized;
+    }
+
+    final void onError(AuthError authError) {
         synchronized (lock) {
-            authCallback.onError(cause);
+            authCallback.onError(authError);
             authCallback = null;
         }
     }
 
-    final void onCancelled() {
+    final void onCancelled(AuthCancel cancel) {
         synchronized (lock) {
-            authCallback.onCancel();
+            authCallback.onCancel(cancel);
             authCallback = null;
         }
     }
@@ -59,7 +64,7 @@ abstract class AbstractAuthService implements AuthService {
         }
     }
 
-    void setCallback(AuthCallback callback) {
+    private void setCallback(AuthCallback callback) {
         if (callback == null) {
             throw new NullPointerException("Callback cannot be null");
         }

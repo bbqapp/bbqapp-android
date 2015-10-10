@@ -24,50 +24,20 @@
 
 package org.bbqapp.android.auth;
 
-import android.preference.PreferenceManager;
-
 /**
- * Interface for all auth service like g+, facebook, ...
+ *
  */
-public interface AuthService extends PreferenceManager.OnActivityResultListener {
+public class AuthError extends Exception {
 
-    /**
-     * Returns id of service provider
-     *
-     * @return
-     */
-    String getId();
+    AuthError(String msg) {
+        super(msg);
+    }
 
-    /**
-     * Initialize sdk but without login
-     */
-    void init();
+    AuthError(Throwable cause) {
+        super(cause);
+    }
 
-    /**
-     * Determines if this service is initialized
-     *
-     * @return {@code true} if service is already initialized {@code false} otherwise
-     */
-    boolean isInitialized();
-
-    /**
-     * Performs login
-     *
-     * @param callback callback to call
-     */
-    void login(AuthCallback callback);
-
-    /**
-     * Performs logout
-     *
-     * @param callback callback to call
-     */
-    void logout(AuthCallback callback);
-
-    /**
-     * Determines if some operation currently in progress
-     *
-     * @return {@code true} if service is currently busy {@code false} otherwise
-     */
-    boolean isBusy();
+    AuthError(String msg, Throwable cause) {
+        super(msg, cause);
+    }
 }

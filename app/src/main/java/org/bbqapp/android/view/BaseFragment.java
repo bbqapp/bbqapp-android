@@ -30,14 +30,34 @@ import android.os.Bundle;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import de.halfbit.tinybus.TinyBus;
+
 /**
  * Base fragment for all fragments in application
  */
 public abstract class BaseFragment extends Fragment {
+
+    @Inject
+    TinyBus bus;
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         ((MainActivity) getActivity()).getObjectGraph().plus(getModules().toArray()).inject(this);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        bus.register(this);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        bus.unregister(this);
     }
 
     /**

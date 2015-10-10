@@ -65,37 +65,37 @@ public class MenuAdapter extends AbstractListAdapter<MenuAdapter.Entry> {
         clickListener = listener;
     }
 
-    public Entry addHeader(String string) {
+    public Header addHeader(String string) {
         return add(new Header(string));
     }
 
-    public Entry addHeader(int stringResource) {
+    public Header addHeader(int stringResource) {
         return add(new Header(stringResource));
     }
 
-    public Entry addHeader(String string, int imageResource) {
+    public Header addHeader(String string, int imageResource) {
         return add(new Header(string, imageResource));
     }
 
-    public Entry addHeader(int stringResource, int imageResource) {
+    public Header addHeader(int stringResource, int imageResource) {
         return add(new Header(stringResource, imageResource));
     }
 
-    public Entry addHeader(int stringResource, Bitmap imageBitmap) {
+    public Header addHeader(int stringResource, Bitmap imageBitmap) {
         return add(new Header(stringResource, imageBitmap));
     }
 
-    public Entry addHeader(String string, Bitmap imageBitmap) {
+    public Header addHeader(String string, Bitmap imageBitmap) {
         return add(new Header(string, imageBitmap));
     }
 
-    public Entry addHeader(String string, Drawable imageDrawable) {
+    public Header addHeader(String string, Drawable imageDrawable) {
         return add(new Header(string, imageDrawable));
     }
 
-    public Entry getHeader() {
+    public Header getHeader() {
         Entry first = !entries.isEmpty() ? entries.get(0) : null;
-        return first != null && first.getType() == Type.HEADER ? first : null;
+        return first != null && first.getType() == Type.HEADER ? (Header) first : null;
     }
 
     public Entry add(String string) {
@@ -140,7 +140,7 @@ public class MenuAdapter extends AbstractListAdapter<MenuAdapter.Entry> {
         onInvalidated();
     }
 
-    public Entry add(Entry entry) {
+    public <T extends Entry> T add(T entry) {
         // header always as first element
         if (entry.getType() == Type.HEADER && !entries.isEmpty()) {
             throw new IllegalArgumentException("You can add header only as first element");
@@ -170,7 +170,7 @@ public class MenuAdapter extends AbstractListAdapter<MenuAdapter.Entry> {
 
     @Override
     public View getView(Entry entry, View view, ViewGroup parent) {
-        if(view == null) {
+        if (view == null) {
             view = inflater.inflate(entry.getType().resource, parent, false);
         }
 

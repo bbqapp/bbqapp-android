@@ -48,6 +48,7 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import de.halfbit.tinybus.TinyBus;
 
 /**
  * Module for all activities and for all its fragments
@@ -114,5 +115,11 @@ public class ActivityModule {
     @Singleton
     GooglePlus provideGooglePlus(@ModuleContext Activity activity) {
         return new GooglePlus(activity);
+    }
+
+    @Provides
+    @Singleton
+    LoginManager provideLoginManager(@AppModule.ModuleContext Context context, TinyBus bus, GooglePlus plus) {
+        return new LoginManager(context, bus, plus);
     }
 }

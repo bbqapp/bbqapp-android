@@ -36,13 +36,14 @@ import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.widget.ListView;
-
-import com.facebook.FacebookSdk;
+import android.widget.Toast;
 
 import org.bbqapp.android.App;
 import org.bbqapp.android.BuildConfig;
 import org.bbqapp.android.R;
-import org.bbqapp.android.auth.GooglePlus;
+import org.bbqapp.android.auth.AuthCancel;
+import org.bbqapp.android.auth.AuthData;
+import org.bbqapp.android.auth.AuthError;
 import org.bbqapp.android.view.create.CreateFragment;
 import org.bbqapp.android.view.list.ListFragment;
 import org.bbqapp.android.view.login.LoginFragment;
@@ -54,6 +55,8 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import dagger.ObjectGraph;
+import de.halfbit.tinybus.Subscribe;
+import de.halfbit.tinybus.TinyBus;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -68,13 +71,18 @@ public class MainActivity extends AppCompatActivity {
     private ObjectGraph objectGraph;
 
     @Inject
-    GooglePlus googlePlus;
+    TinyBus bus;
+
+    @Inject
+    LoginManager loginManager;
 
     private enum View {
         LOGIN, MAP, LIST, SEARCH, CREATE, SETTINGS, CONTACT, NOTICE, FOOTER;
     }
 
     private Map<MenuAdapter.Entry, View> menuEntries = new HashMap<>();
+
+    private MenuAdapter.Header loginHeader;
 
     @Inject
     LayoutInflater inflater;
@@ -89,8 +97,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         setContentView(R.layout.activity_main);
-
-        initSdks();
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -107,7 +113,8 @@ public class MainActivity extends AppCompatActivity {
         // list view
         ListView menuList = (ListView) findViewById(R.id.menu_list);
         menuListAdapter = new MenuAdapter(inflater, menuList);
-        menuEntries.put(menuListAdapter.addHeader(getCaption(View.LOGIN)), View.LOGIN);
+        loginHeader = menuListAdapter.addHeader(getCaption(View.LOGIN));
+        menuEntries.put(loginHeader, View.LOGIN);
         menuEntries.put(menuListAdapter.add(getCaption(View.MAP)), View.MAP);
         menuEntries.put(menuListAdapter.add(getCaption(View.LIST)), View.LIST);
         menuEntries.put(menuListAdapter.add(getCaption(View.SEARCH)), View.SEARCH);
@@ -132,16 +139,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+
+        bus.register(this);
+
+        loginManager.login();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        bus.unregister(this);
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
 
         // dagger
         objectGraph = null;
-    }
-
-    private void initSdks() {
-        // init SDKs
-        FacebookSdk.sdkInitialize(this);
     }
 
     protected String getCaption(View view) {
@@ -191,6 +209,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Finds a fragment by view
+     *
      * @param view fragment of view to find
      * @return found fragment or {@code null} otherwise
      */
@@ -219,18 +238,43 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        for(View view : View.values()) {
+
+        // propagate results to child fragments
+        for (View view : View.values()) {
             Fragment fragment = findFragmentByView(view);
             if (fragment != null) {
                 fragment.onActivityResult(requestCode, resultCode, data);
             }
         }
 
-        // auth services
-        googlePlus.onActivityResult(requestCode, resultCode, data);
+        // propagate results to auth services
+        loginManager.onActivityResult(requestCode, resultCode, data);
     }
 
     public ObjectGraph getObjectGraph() {
         return objectGraph;
+    }
+
+    @Subscribe
+    public void onAuthData(AuthData authData) {
+        if(authData != null && authData.isLoggedIn()) {
+            Toast.makeText(this, authData.getDisplayName() + " is logged in.", Toast.LENGTH_LONG).show();
+
+            loginHeader.setString(authData.getDisplayName());
+        } else {
+            Toast.makeText(this, "Logged out.", Toast.LENGTH_LONG).show();
+
+            loginHeader.setString(getCaption(View.LOGIN));
+        }
+    }
+
+    @Subscribe
+    public void onAuthError(AuthError authError) {
+        Toast.makeText(this, "Error occurred during authorization.", Toast.LENGTH_LONG).show();
+    }
+
+    @Subscribe
+    public void onAuthCancel(AuthCancel authCancel) {
+        Toast.makeText(this, "login canceled.", Toast.LENGTH_LONG).show();
     }
 }

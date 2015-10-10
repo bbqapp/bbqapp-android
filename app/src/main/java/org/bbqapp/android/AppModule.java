@@ -36,6 +36,7 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import de.halfbit.tinybus.TinyBus;
 
 /**
  * Application module to hold global states
@@ -69,5 +70,11 @@ public class AppModule {
     @Singleton
     LocationManager provideLocationManager(@ModuleContext Context context) {
         return (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+    }
+
+    @Provides
+    @Singleton
+    TinyBus provideTinyBus(@ModuleContext Context context) {
+        return new TinyBus(context);
     }
 }

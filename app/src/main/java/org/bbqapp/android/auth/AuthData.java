@@ -31,11 +31,20 @@ public class AuthData {
     private String authServiceId;
     private String token;
     private String displayName;
+    private String imageUrl;
 
-    AuthData(String authServiceId, String token, String displayName) {
+    AuthData(String authServiceId) {
+        if (authServiceId == null) {
+            throw new NullPointerException("Auth service id cannot be null");
+        }
         this.authServiceId = authServiceId;
+    }
+
+    AuthData(String authServiceId, String token, String displayName, String imageUrl) {
+        this(authServiceId);
         this.token = token;
         this.displayName = displayName;
+        this.imageUrl = imageUrl;
     }
 
     public String getAuthServiceId() {
@@ -48,6 +57,14 @@ public class AuthData {
 
     public String getDisplayName() {
         return displayName;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public boolean isLoggedIn() {
+        return getToken() != null;
     }
 
     @Override
