@@ -25,9 +25,11 @@
 package org.bbqapp.android.auth;
 
 public interface AuthCallback {
-    void onSuccess(AuthData authData);
+    void onData(AuthData authData);
 
     void onCancel(AuthCancel authCancel);
 
     void onError(AuthError authError);
+
+    void onInit(AuthInit authInit);
 }

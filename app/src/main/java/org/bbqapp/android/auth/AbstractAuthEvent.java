@@ -27,8 +27,22 @@ package org.bbqapp.android.auth;
 /**
  *
  */
-public class AuthCancel extends AbstractAuthEvent {
-    AuthCancel(String authServiceId) {
-        super(authServiceId);
+abstract class AbstractAuthEvent implements AuthEvent {
+    private String authServiceId;
+
+    AbstractAuthEvent(String authServiceId) {
+        validateAuthServiceId(authServiceId);
+        this.authServiceId = authServiceId;
+    }
+
+    @Override
+    public String getAuthServiceId() {
+        return authServiceId;
+    }
+
+    static void validateAuthServiceId(String authServiceId) {
+        if (authServiceId == null) {
+            throw new NullPointerException("Auth service id cannot be null");
+        }
     }
 }

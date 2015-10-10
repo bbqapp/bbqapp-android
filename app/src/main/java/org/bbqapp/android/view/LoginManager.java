@@ -33,6 +33,7 @@ import org.bbqapp.android.auth.AuthCallback;
 import org.bbqapp.android.auth.AuthCancel;
 import org.bbqapp.android.auth.AuthData;
 import org.bbqapp.android.auth.AuthError;
+import org.bbqapp.android.auth.AuthInit;
 import org.bbqapp.android.auth.AuthService;
 
 import java.util.HashMap;
@@ -64,7 +65,7 @@ public class LoginManager implements AuthCallback, PreferenceManager.OnActivityR
     }
 
     public boolean login() {
-        if(authData != null && authData.isLoggedIn()) {
+        if (authData != null && authData.isLoggedIn()) {
             return false;
         }
 
@@ -85,9 +86,28 @@ public class LoginManager implements AuthCallback, PreferenceManager.OnActivityR
         if (authData != null && authData.isLoggedIn() && authData.getAuthServiceId().equals(authServiceId)) {
             throw new IllegalArgumentException("You must log out before you can log in");
         }
-        AuthService service = services.get(authServiceId);
-        service.init();
-        service.login(this);
+        final AuthService service = services.get(authServiceId);
+        service.init(new AuthCallback() {
+            @Override
+            public void onData(AuthData authData) {
+                LoginManager.this.onData(authData);
+            }
+
+            @Override
+            public void onCancel(AuthCancel authCancel) {
+                LoginManager.this.onCancel(authCancel);
+            }
+
+            @Override
+            public void onError(AuthError authError) {
+                LoginManager.this.onError(authError);
+            }
+
+            @Override
+            public void onInit(AuthInit authInit) {
+                service.login(this);
+            }
+        });
     }
 
     public void logout() {
@@ -98,7 +118,7 @@ public class LoginManager implements AuthCallback, PreferenceManager.OnActivityR
     }
 
     @Override
-    public void onSuccess(AuthData authData) {
+    public void onData(AuthData authData) {
         this.authData = authData;
 
         SharedPreferences.Editor editor = preferences.edit();
@@ -107,7 +127,7 @@ public class LoginManager implements AuthCallback, PreferenceManager.OnActivityR
             editor.putString(PREFERENCES_SERVICE_ID_NAME, authData.getAuthServiceId());
         }
         editor.apply();
-        
+
         bus.post(authData);
     }
 
@@ -122,6 +142,11 @@ public class LoginManager implements AuthCallback, PreferenceManager.OnActivityR
     }
 
     @Override
+    public void onInit(AuthInit authInit) {
+        bus.post(authInit);
+    }
+
+    @Override
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
         for (AuthService service : services.values()) {
             if (service.onActivityResult(requestCode, resultCode, data)) {
@@ -130,5 +155,14 @@ public class LoginManager implements AuthCallback, PreferenceManager.OnActivityR
         }
 
         return false;
+    }
+
+    /**
+     * Initializes all auth services
+     */
+    public void init() {
+        for (AuthService service : services.values()) {
+            service.init(this);
+        }
     }
 }

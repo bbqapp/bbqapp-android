@@ -29,42 +29,39 @@ package org.bbqapp.android.auth;
  */
 abstract class AbstractAuthService implements AuthService {
     private AuthCallback authCallback = null;
-    private boolean initialized = false;
     private Object lock = new Object();
 
-    public void init(AuthCallback callback) {
-        setCallback(callback);
-        init();
-        initialized = true;
-    }
-
-    @Override
-    public boolean isInitialized() {
-        return initialized;
+    final void onInit(AuthInit authInit) {
+        synchronized (lock) {
+            unsetCallback().onInit(authInit);
+        }
     }
 
     final void onError(AuthError authError) {
         synchronized (lock) {
-            authCallback.onError(authError);
-            authCallback = null;
+            unsetCallback().onError(authError);
         }
     }
 
     final void onCancelled(AuthCancel cancel) {
         synchronized (lock) {
-            authCallback.onCancel(cancel);
-            authCallback = null;
+            unsetCallback().onCancel(cancel);
         }
     }
 
     final void onSuccess(AuthData authData) {
         synchronized (lock) {
-            authCallback.onSuccess(authData);
-            authCallback = null;
+            unsetCallback().onData(authData);
         }
     }
 
-    private void setCallback(AuthCallback callback) {
+    final private AuthCallback unsetCallback() {
+        AuthCallback cb = authCallback;
+        authCallback = null;
+        return cb;
+    }
+
+    protected void setCallback(AuthCallback callback) {
         if (callback == null) {
             throw new NullPointerException("Callback cannot be null");
         }
@@ -83,5 +80,33 @@ abstract class AbstractAuthService implements AuthService {
         synchronized (lock) {
             return authCallback != null;
         }
+    }
+
+    protected AuthInit createAuthInit() {
+        return new AuthInit(getId());
+    }
+
+    protected AuthCancel createAuthCancel() {
+        return new AuthCancel(getId());
+    }
+
+    protected AuthData createAuthData() {
+        return new AuthData(getId());
+    }
+
+    protected AuthData createAuthData(String token, String displayName, String imageUrl) {
+        return new AuthData(getId(), token, displayName, imageUrl);
+    }
+
+    protected AuthError createAuthError(String message) {
+        return new AuthError(getId(), message);
+    }
+
+    protected AuthError createAuthError(Throwable cause) {
+        return new AuthError(getId(), cause);
+    }
+
+    protected AuthError createAuthError(String message, Throwable cause) {
+        return new AuthError(getId(), message, cause);
     }
 }

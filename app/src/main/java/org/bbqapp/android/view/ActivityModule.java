@@ -32,6 +32,7 @@ import android.view.LayoutInflater;
 import org.bbqapp.android.AppModule;
 import org.bbqapp.android.api.Api;
 import org.bbqapp.android.api.service.Places;
+import org.bbqapp.android.auth.Facebook;
 import org.bbqapp.android.auth.GooglePlus;
 import org.bbqapp.android.geocoding.AsyncGeocoder;
 import org.bbqapp.android.service.LocationService;
@@ -39,11 +40,6 @@ import org.bbqapp.android.view.create.CreateFragment;
 import org.bbqapp.android.view.list.ListFragment;
 import org.bbqapp.android.view.login.LoginFragment;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
-import javax.inject.Qualifier;
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -65,15 +61,6 @@ import de.halfbit.tinybus.TinyBus;
         library = true
 )
 public class ActivityModule {
-    /**
-     * Should be used to obtain object in activity context
-     */
-    @Qualifier
-    @Documented
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface ModuleContext {
-    }
-
     private final Activity activity;
 
     public ActivityModule(Activity activity) {
@@ -82,14 +69,13 @@ public class ActivityModule {
 
     @Provides
     @Singleton
-    @ModuleContext
     Activity provideActivity() {
         return activity;
     }
 
     @Provides
     @Singleton
-    LayoutInflater provideLayoutInflater(@ModuleContext Activity context) {
+    LayoutInflater provideLayoutInflater(Activity context) {
         return (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
@@ -107,19 +93,25 @@ public class ActivityModule {
 
     @Provides
     @Singleton
-    AsyncGeocoder provideAsyncGeocoder(@ModuleContext Activity context) {
+    AsyncGeocoder provideAsyncGeocoder(Activity context) {
         return AsyncGeocoder.getInstance(context);
     }
 
     @Provides
     @Singleton
-    GooglePlus provideGooglePlus(@ModuleContext Activity activity) {
+    GooglePlus provideGooglePlus(Activity activity) {
         return new GooglePlus(activity);
     }
 
     @Provides
     @Singleton
-    LoginManager provideLoginManager(@AppModule.ModuleContext Context context, TinyBus bus, GooglePlus plus) {
-        return new LoginManager(context, bus, plus);
+    Facebook provideFacebook(Context context) {
+        return new Facebook(context);
+    }
+
+    @Provides
+    @Singleton
+    LoginManager provideLoginManager(Context context, TinyBus bus, GooglePlus plus, Facebook facebook) {
+        return new LoginManager(context, bus, plus, facebook);
     }
 }

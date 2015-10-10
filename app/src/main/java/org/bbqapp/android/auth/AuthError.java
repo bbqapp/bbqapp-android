@@ -27,17 +27,29 @@ package org.bbqapp.android.auth;
 /**
  *
  */
-public class AuthError extends Exception {
+public class AuthError extends AbstractAuthEvent {
+    private Throwable cause;
+    private String message;
 
-    AuthError(String msg) {
-        super(msg);
+    AuthError(String authServiceId, String message) {
+        this(authServiceId, message, null);
     }
 
-    AuthError(Throwable cause) {
-        super(cause);
+    AuthError(String authServiceId, Throwable cause) {
+        this(authServiceId, cause.getLocalizedMessage(), cause);
     }
 
-    AuthError(String msg, Throwable cause) {
-        super(msg, cause);
+    AuthError(String authServiceId, String message, Throwable cause) {
+        super(authServiceId);
+        this.message = message;
+        this.cause = cause;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public Throwable getCause() {
+        return cause;
     }
 }

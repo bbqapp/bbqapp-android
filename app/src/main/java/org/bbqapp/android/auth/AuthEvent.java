@@ -27,8 +27,6 @@ package org.bbqapp.android.auth;
 /**
  *
  */
-public class AuthCancel extends AbstractAuthEvent {
-    AuthCancel(String authServiceId) {
-        super(authServiceId);
-    }
+public interface AuthEvent {
+    String getAuthServiceId();
 }

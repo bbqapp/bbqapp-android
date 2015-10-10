@@ -27,17 +27,13 @@ package org.bbqapp.android.auth;
 /**
  * Holder of authentication information
  */
-public class AuthData {
-    private String authServiceId;
+public class AuthData extends AbstractAuthEvent {
     private String token;
     private String displayName;
     private String imageUrl;
 
     AuthData(String authServiceId) {
-        if (authServiceId == null) {
-            throw new NullPointerException("Auth service id cannot be null");
-        }
-        this.authServiceId = authServiceId;
+        super(authServiceId);
     }
 
     AuthData(String authServiceId, String token, String displayName, String imageUrl) {
@@ -45,10 +41,6 @@ public class AuthData {
         this.token = token;
         this.displayName = displayName;
         this.imageUrl = imageUrl;
-    }
-
-    public String getAuthServiceId() {
-        return authServiceId;
     }
 
     public String getToken() {

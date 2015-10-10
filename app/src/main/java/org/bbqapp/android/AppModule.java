@@ -27,11 +27,6 @@ package org.bbqapp.android;
 import android.content.Context;
 import android.location.LocationManager;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
-import javax.inject.Qualifier;
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -43,16 +38,6 @@ import de.halfbit.tinybus.TinyBus;
  */
 @Module(library = true)
 public class AppModule {
-    /**
-     * Should be used to obtain object in application context
-     */
-    @Qualifier
-    @Documented
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface ModuleContext {
-    }
-
-
     private final App app;
 
     AppModule(App app) {
@@ -61,20 +46,19 @@ public class AppModule {
 
     @Provides
     @Singleton
-    @ModuleContext
     Context provideApplicationContext() {
         return app;
     }
 
     @Provides
     @Singleton
-    LocationManager provideLocationManager(@ModuleContext Context context) {
+    LocationManager provideLocationManager(Context context) {
         return (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
     }
 
     @Provides
     @Singleton
-    TinyBus provideTinyBus(@ModuleContext Context context) {
+    TinyBus provideTinyBus(Context context) {
         return new TinyBus(context);
     }
 }

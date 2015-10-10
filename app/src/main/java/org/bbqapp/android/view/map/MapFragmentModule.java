@@ -41,7 +41,7 @@ import dagger.Provides;
 public class MapFragmentModule {
 
     @Provides
-    PlaceClusterManager providePlaceClusterManager(@ActivityModule.ModuleContext Activity context) {
+    PlaceClusterManager providePlaceClusterManager(Activity context) {
         return new PlaceClusterManager(context);
     }
 }

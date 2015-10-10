@@ -257,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Subscribe
     public void onAuthData(AuthData authData) {
-        if(authData != null && authData.isLoggedIn()) {
+        if (authData != null && authData.isLoggedIn()) {
             Toast.makeText(this, authData.getDisplayName() + " is logged in.", Toast.LENGTH_LONG).show();
 
             loginHeader.setString(authData.getDisplayName());

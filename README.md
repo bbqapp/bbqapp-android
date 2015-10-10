@@ -34,5 +34,6 @@ Create new value resource file res/values/credentials.xml with following content
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="google_maps_api_key">your_key</string>
+  <string name="facebook_app_id">your_id</string>
 </resources>
 ```

@@ -41,7 +41,7 @@ public interface AuthService extends PreferenceManager.OnActivityResultListener 
     /**
      * Initialize sdk but without login
      */
-    void init();
+    void init(AuthCallback callback);
 
     /**
      * Determines if this service is initialized

@@ -46,10 +46,13 @@ import java.io.IOException;
  */
 public class GooglePlus extends AbstractAuthService implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient
         .OnConnectionFailedListener {
+
+    public static final String ID = "plus";
+    public static final int PLUS_RESOLUTION_REQUEST_CODE = 154;
+
+
     private GoogleApiClient googleApiClient;
     private Activity activity;
-
-    public static final int PLUS_RESOLUTION_REQUEST_CODE = 154;
 
     private boolean operationLogin;
 
@@ -59,11 +62,12 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
 
     @Override
     public String getId() {
-        return "plus";
+        return ID;
     }
 
     @Override
-    public void init() {
+    public void init(AuthCallback callback) {
+        setCallback(callback);
         if (googleApiClient == null) {
             googleApiClient = new GoogleApiClient.Builder(activity)
                     .addApi(Plus.API)
@@ -72,18 +76,25 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
                     .addOnConnectionFailedListener(this)
                     .build();
         }
+
+        onInit(createAuthInit());
+    }
+
+    @Override
+    public boolean isInitialized() {
+        return googleApiClient != null;
     }
 
     @Override
     public void login(AuthCallback callback) {
-        init(callback);
+        setCallback(callback);
         operationLogin = true;
         googleApiClient.connect();
     }
 
     @Override
     public void logout(AuthCallback callback) {
-        init(callback);
+        setCallback(callback);
         operationLogin = false;
         googleApiClient.connect();
     }
@@ -95,7 +106,7 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
                 googleApiClient.connect();
             } else {
                 googleApiClient.disconnect();
-                onCancelled(new AuthCancel());
+                onCancelled(createAuthCancel());
             }
 
             return true;
@@ -119,7 +130,7 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
                 protected Void doInBackground(Void... params) {
                     try {
                         String token = GoogleAuthUtil.getToken(activity, accountName, "oauth2:" + Plus.SCOPE_PLUS_LOGIN);
-                        authData = new AuthData(getId(), token, displayName, imageUrl);
+                        authData = createAuthData(token, displayName, imageUrl);
                     } catch (IOException | GoogleAuthException e) {
                         cause = e;
                     }
@@ -132,7 +143,7 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
                     super.onPostExecute(aVoid);
 
                     if (cause != null) {
-                        onError(new AuthError(cause));
+                        onError(createAuthError(cause));
                     } else {
                         onSuccess(authData);
                     }
@@ -145,11 +156,11 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
                 public void onResult(Status status) {
                     googleApiClient.disconnect();
                     if (status.isSuccess()) {
-                        onSuccess(new AuthData(getId()));
+                        onSuccess(createAuthData());
                     } else if (status.isCanceled()) {
-                        onCancelled(new AuthCancel());
+                        onCancelled(createAuthCancel());
                     } else {
-                        onError(new AuthError(status.getStatusMessage()));
+                        onError(createAuthError(status.getStatusMessage()));
                     }
                 }
             });
@@ -159,7 +170,7 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
     @Override
     public void onConnectionSuspended(int i) {
         googleApiClient.disconnect();
-        onError(new AuthError("No connection"));
+        onError(createAuthError("No connection"));
     }
 
     @Override
@@ -172,7 +183,7 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
             }
         } else {
             googleApiClient.disconnect();
-            onError(new AuthError(connectionResult.getErrorMessage()));
+            onError(createAuthError(connectionResult.getErrorMessage()));
             //GooglePlayServicesUtil.getErrorDialog(connectionResult.getErrorCode(), activity, 0).show();
         }
     }
