@@ -23,26 +23,39 @@
   ~ SOFTWARE.
   -->
 
-<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v4.widget.DrawerLayout
     android:id="@+id/navigation"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:elevation="7dp">
 
     <LinearLayout
-        android:clickable="true"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clickable="true"
         android:orientation="vertical">
 
-        <include
+        <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"
-            layout="@layout/toolbar" />
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#666666"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark"
+            android:layout_marginBottom="-4dp"/>
+
+        <fr.castorflex.android.smoothprogressbar.SmoothProgressBar
+            android:id="@+id/toolbar_progressbar"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:indeterminate="true"
+            app:spb_stroke_width="4dp"/>
 
         <FrameLayout
             android:id="@+id/content_frame"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"/>
     </LinearLayout>
 
     <LinearLayout
@@ -53,13 +66,14 @@
         android:background="#ffffff"
         android:orientation="vertical"
         android:scrollbars="vertical">
+
         <ListView
             android:id="@+id/menu_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:choiceMode="singleChoice"
-            android:dividerHeight="0dp"
-            android:divider="@null"/>
+            android:divider="@null"
+            android:dividerHeight="0dp"/>
     </LinearLayout>
 
 </android.support.v4.widget.DrawerLayout>

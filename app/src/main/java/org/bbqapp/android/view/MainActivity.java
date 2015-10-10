@@ -36,6 +36,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import org.bbqapp.android.App;
@@ -54,6 +55,8 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import dagger.ObjectGraph;
 import de.halfbit.tinybus.Subscribe;
 import de.halfbit.tinybus.TinyBus;
@@ -64,11 +67,16 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getName();
 
     private DrawerLayout menu;
-    private Toolbar toolbar;
     private ActionBarDrawerToggle menuToggle;
     private MenuAdapter menuListAdapter;
 
     private ObjectGraph objectGraph;
+
+    @Bind(R.id.toolbar_progressbar)
+    ProgressBar toolbarProgressBar;
+
+    @Bind(R.id.toolbar)
+    Toolbar toolbar;
 
     @Inject
     TinyBus bus;
@@ -98,7 +106,9 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        ButterKnife.bind(this);
+
+
         setSupportActionBar(toolbar);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -160,6 +170,13 @@ public class MainActivity extends AppCompatActivity {
 
         // dagger
         objectGraph = null;
+
+        // butterknife
+        ButterKnife.unbind(this);
+    }
+
+    public ProgressBar getProgressBar() {
+        return toolbarProgressBar;
     }
 
     protected String getCaption(View view) {

@@ -202,12 +202,15 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
     private void displayPlaces(LatLng target, long radius) {
         Log.i(TAG, "Request places at " + target + " with radius " + radius);
 
+        getProgressbar().setIndeterminate(true);
+
         placesEP.getPlaces(target.latitude + "," + target.longitude, radius, new Callback<List<Place>>() {
 
             @Override
             public void onSuccess(List<Place> places) {
                 Log.i(TAG, "Received " + places.size() + " places");
                 placeClusterManager.setPlaces(places);
+                getProgressbar().setIndeterminate(false);
             }
 
             @Override

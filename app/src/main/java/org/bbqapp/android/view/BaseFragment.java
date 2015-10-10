@@ -26,6 +26,7 @@ package org.bbqapp.android.view;
 
 import android.app.Fragment;
 import android.os.Bundle;
+import android.widget.ProgressBar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +59,10 @@ public abstract class BaseFragment extends Fragment {
     public void onStop() {
         super.onStop();
         bus.unregister(this);
+    }
+
+    public ProgressBar getProgressbar() {
+        return ((MainActivity) getActivity()).getProgressBar();
     }
 
     /**
