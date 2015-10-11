@@ -51,6 +51,7 @@ public abstract class BaseFragment extends Fragment {
 
         if(!injected) {
             ((MainActivity) getActivity()).getObjectGraph().plus(getModules().toArray()).inject(this);
+            injected = true;
         }
     }
 
