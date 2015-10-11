@@ -139,6 +139,10 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
 
+        placeClusterManager.init(map);
+        placeClusterManager.setOnPlaceClickListener(this);
+        placeClusterManager.setOnCameraChangeListener(this);
+
         map.setLocationSource(this);
         map.setMyLocationEnabled(true);
         map.setOnMapClickListener(this);
@@ -148,12 +152,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
             LatLng latLng = new LatLng(l.getLatitude(), l.getLongitude());
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 13));
         }
-
-        placeClusterManager.init(map);
-        placeClusterManager.setOnPlaceClickListener(this);
-        placeClusterManager.setOnCameraChangeListener(this);
-
-        //displayPlaces();
     }
 
     @Override

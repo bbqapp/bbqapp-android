@@ -43,10 +43,15 @@ public abstract class BaseFragment extends Fragment {
     @Inject
     TinyBus bus;
 
+    private boolean injected = false;
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        ((MainActivity) getActivity()).getObjectGraph().plus(getModules().toArray()).inject(this);
+
+        if(!injected) {
+            ((MainActivity) getActivity()).getObjectGraph().plus(getModules().toArray()).inject(this);
+        }
     }
 
     @Override
