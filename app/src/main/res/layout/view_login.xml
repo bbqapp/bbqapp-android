@@ -31,29 +31,35 @@
         android:id="@+id/login_buttons"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"/>
+        android:orientation="vertical"
+        android:gravity="center_horizontal"/>
     <LinearLayout
         android:id="@+id/login_info"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical" >
 
+        <TextView
+            android:id="@+id/login_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Large Text"/>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_alignParentBottom="true"
-            android:layout_margin="0dp">
+            android:layout_margin="0dp"
+            android:gravity="bottom">
             <Button
                 android:id="@+id/logout_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/logout"
-                android:layout_gravity="bottom"
                 android:layout_margin="0dp"
                 android:textAppearance="?android:attr/textAppearanceLarge"
-                android:padding="20dp"
-                android:singleLine="false"
-                android:alpha="1.0"/>
+                android:padding="20dp"/>
         </LinearLayout>
     </LinearLayout>
     <!--<com.facebook.login.widget.LoginButton

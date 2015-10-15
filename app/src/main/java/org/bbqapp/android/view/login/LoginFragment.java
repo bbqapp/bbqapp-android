@@ -30,6 +30,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.common.SignInButton;
@@ -70,6 +71,9 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
 
     @Bind(R.id.login_info)
     LinearLayout loginInfo;
+
+    @Bind(R.id.login_name)
+    TextView nameText;
 
     private boolean initialized = false;
 
@@ -123,6 +127,8 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
         } else {
             loginButtons.setVisibility(loggedIn ? View.GONE : View.VISIBLE);
             loginInfo.setVisibility(loggedIn ? View.VISIBLE : View.GONE);
+
+            nameText.setText(authData.getDisplayName());
         }
     }
 
@@ -166,6 +172,7 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
         }
 
         if (button != null) {
+            button.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             button.setOnClickListener(this);
             loginButtons.addView(button);
         }
