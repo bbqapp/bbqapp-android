@@ -186,7 +186,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
         Location.distanceBetween(bounds.northeast.latitude, bounds.northeast.longitude, bounds.southwest
                 .latitude, bounds.southwest.longitude, results);
 
-        return Math.round(results[0] + 1);
+        return Math.round(results[0] / 1_000);
 
     }
 
@@ -202,7 +202,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
 
         getProgressbar().setIndeterminate(true);
 
-        placesEP.getPlaces(target.latitude + "," + target.longitude, radius, new Callback<List<Place>>() {
+        placesEP.getPlaces(target.longitude + "," + target.latitude, radius, new Callback<List<Place>>() {
 
             @Override
             public void onSuccess(List<Place> places) {

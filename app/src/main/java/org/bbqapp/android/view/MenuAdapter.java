@@ -206,8 +206,9 @@ public class MenuAdapter extends AbstractListAdapter<MenuAdapter.Entry> {
     }
 
     private void setImage(ImageView view, Text entry) {
-        view.setImageResource(entry.getImageResource());
-        if (entry.getImageBitmap() != null) {
+        if (entry.getImageResource() != null) {
+            view.setImageResource(entry.getImageResource());
+        } else if (entry.getImageBitmap() != null) {
             view.setImageBitmap(entry.getImageBitmap());
         } else if (entry.getImageDrawable() != null) {
             view.setImageDrawable(entry.getImageDrawable());
@@ -295,7 +296,7 @@ public class MenuAdapter extends AbstractListAdapter<MenuAdapter.Entry> {
     }
 
     public class Text extends AbstractStringEntry {
-        private int imageResource;
+        private Integer imageResource;
         private Bitmap imageBitmap;
         private Drawable imageDrawable;
 
@@ -339,15 +340,15 @@ public class MenuAdapter extends AbstractListAdapter<MenuAdapter.Entry> {
 
         private void clearImages() {
             imageBitmap = null;
-            imageResource = 0;
+            imageResource = null;
             imageDrawable = null;
         }
 
-        public int getImageResource() {
+        public Integer getImageResource() {
             return imageResource;
         }
 
-        public void setImageResource(int imageResource) {
+        public void setImageResource(Integer imageResource) {
             clearImages();
             this.imageResource = imageResource;
             onChanged();
@@ -425,7 +426,7 @@ public class MenuAdapter extends AbstractListAdapter<MenuAdapter.Entry> {
         }
     }
 
-    public static interface OnEntryClickListener {
-        public void onEntryClick(ListView listView, Entry entry, int position, long id);
+    public interface OnEntryClickListener {
+        void onEntryClick(ListView listView, Entry entry, int position, long id);
     }
 }

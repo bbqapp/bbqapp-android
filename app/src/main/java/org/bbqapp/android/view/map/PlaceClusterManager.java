@@ -98,12 +98,14 @@ class PlaceClusterManager {
     public void setPlaces(List<Place> places) {
         ArrayList<PlaceItem> markers = new ArrayList<>(places.size());
         manager.clearItems();
+        manager.cluster();
 
         for (Place place : places) {
             markers.add(new PlaceItem(place));
         }
 
         manager.addItems(markers);
+        manager.cluster();
     }
 
     private class PlaceManager extends ClusterManager<PlaceItem> {

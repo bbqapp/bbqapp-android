@@ -29,7 +29,7 @@ package org.bbqapp.android.auth;
  */
 abstract class AbstractAuthService implements AuthService {
     private AuthCallback authCallback = null;
-    private Object lock = new Object();
+    private final Object lock = new Object();
 
     final void onInit(AuthInit authInit) {
         synchronized (lock) {
@@ -55,7 +55,7 @@ abstract class AbstractAuthService implements AuthService {
         }
     }
 
-    final private AuthCallback unsetCallback() {
+    final protected AuthCallback unsetCallback() {
         AuthCallback cb = authCallback;
         authCallback = null;
         return cb;
