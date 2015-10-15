@@ -158,13 +158,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-
-        bus.unregister(this);
-    }
-
-    @Override
     protected void onDestroy() {
         super.onDestroy();
 
@@ -173,6 +166,9 @@ public class MainActivity extends AppCompatActivity {
 
         // butterknife
         ButterKnife.unbind(this);
+
+        // event bus
+        bus.unregister(this);
     }
 
     public ProgressBar getProgressBar() {
