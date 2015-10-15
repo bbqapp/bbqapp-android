@@ -154,7 +154,16 @@ public class MainActivity extends AppCompatActivity {
 
         bus.register(this);
 
+        onAuthData(loginManager.getLastAuthData());
+
         loginManager.login();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        bus.unregister(this);
     }
 
     @Override
@@ -166,9 +175,6 @@ public class MainActivity extends AppCompatActivity {
 
         // butterknife
         ButterKnife.unbind(this);
-
-        // event bus
-        bus.unregister(this);
     }
 
     public ProgressBar getProgressBar() {
@@ -274,7 +280,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, authData.getDisplayName() + " is logged in.", Toast.LENGTH_LONG).show();
 
             loginHeader.setString(authData.getDisplayName());
-        } else {
+        } else if (authData != null) {
             Toast.makeText(this, "Logged out.", Toast.LENGTH_LONG).show();
 
             loginHeader.setString(getCaption(View.LOGIN));
