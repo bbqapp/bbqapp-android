@@ -127,13 +127,13 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
             AuthData authData = loginManager.getLastAuthData();
             boolean loggedIn = authData != null && authData.isLoggedIn();
             boolean initialized = loginManager.isInitialized();
-            boolean isBusy = loginManager.isBusy();
+            boolean busy = loginManager.isBusy();
 
-            getProgressbar().setIndeterminate(isBusy);
+            getProgressbar().setIndeterminate(busy);
 
             if (loggedIn) {
                 displayAuthData(authData);
-            } else if (!loginManager.isBusy() && !initialized) {
+            } else if (!busy && !initialized) {
                 loginManager.init();
             } else if (initialized) {
                 displayLoginButtons();
@@ -153,8 +153,12 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
         loginInfo.setVisibility(View.GONE);
 
         loginButtons.removeAllViews();
-        for(String serviceId : loginManager.getAuthServiceIds()) {
-            loginButtons.addView(createButton(serviceId));
+        View button;
+        for (String serviceId : loginManager.getAuthServiceIds()) {
+            button = createButton(serviceId);
+            if (button != null) {
+                loginButtons.addView(button);
+            }
         }
     }
 
