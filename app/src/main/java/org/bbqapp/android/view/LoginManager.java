@@ -36,7 +36,11 @@ import org.bbqapp.android.auth.AuthError;
 import org.bbqapp.android.auth.AuthInit;
 import org.bbqapp.android.auth.AuthService;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import de.halfbit.tinybus.Produce;
@@ -51,7 +55,7 @@ public class LoginManager implements AuthCallback, PreferenceManager.OnActivityR
 
     private AuthData authData;
     private TinyBus bus;
-    private Map<String, AuthService> services = new ConcurrentHashMap<>();
+    private Map<String, AuthService> services;
 
     private SharedPreferences preferences;
 
@@ -62,9 +66,44 @@ public class LoginManager implements AuthCallback, PreferenceManager.OnActivityR
         this.bus = bus;
         this.preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
 
+        this.services = new ConcurrentHashMap<>();
         for (AuthService service : services) {
             this.services.put(service.getId(), service);
         }
+    }
+
+    /**
+     * Returns all registered {@link AuthService}s
+     *
+     * @return
+     */
+    public Collection<AuthService> getAuthServices() {
+        return Collections.unmodifiableCollection(services.values());
+    }
+
+    public Set<String> getAuthServiceIds() {
+        Collection<AuthService> services = getAuthServices();
+        Set<String> ids = new HashSet<>(services.size());
+
+        for (AuthService service : services) {
+            ids.add(service.getId());
+        }
+
+        return Collections.unmodifiableSet(ids);
+    }
+
+    public AuthService getAuthService(String serviceId) {
+        return services.get(serviceId);
+    }
+
+    private AuthService getAuthServiceOrThrow(String serviceId) {
+        AuthService service = getAuthService(serviceId);
+
+        if (service == null) {
+            throw new IllegalArgumentException("Auth service was not found with id " + serviceId);
+        }
+
+        return service;
     }
 
     public boolean login() {
@@ -90,7 +129,7 @@ public class LoginManager implements AuthCallback, PreferenceManager.OnActivityR
             throw new IllegalArgumentException("You must log out before you can log in");
         }
 
-        final AuthService service = services.get(authServiceId);
+        final AuthService service = getAuthServiceOrThrow(authServiceId);
         service.init(new AuthCallback() {
             @Override
             public void onData(AuthData authData) {
@@ -116,7 +155,7 @@ public class LoginManager implements AuthCallback, PreferenceManager.OnActivityR
 
     public void logout() {
         if (authData != null && authData.isLoggedIn()) {
-            AuthService service = services.get(authData.getAuthServiceId());
+            AuthService service = getAuthServiceOrThrow(authData.getAuthServiceId());
             service.logout(this);
         }
     }
@@ -160,9 +199,14 @@ public class LoginManager implements AuthCallback, PreferenceManager.OnActivityR
 
     }
 
+    /**
+     * Checks if at least one service is busy
+     *
+     * @return {code true} when at least one service is busy otherwise {@code false}
+     */
     public boolean isBusy() {
         synchronized (lock) {
-            for (AuthService service : services.values()) {
+            for (AuthService service : getAuthServices()) {
                 if (service.isBusy()) {
                     return true;
                 }
@@ -172,9 +216,26 @@ public class LoginManager implements AuthCallback, PreferenceManager.OnActivityR
         }
     }
 
+    /**
+     * Checks if all auth services are initialized
+     *
+     * @return {code true} when all services are initialized otherwise {@code false}
+     */
+    public boolean isInitialized() {
+        synchronized (lock) {
+            for (AuthService service : getAuthServices()) {
+                if (!service.isInitialized()) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
     @Override
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
-        for (AuthService service : services.values()) {
+        for (AuthService service : getAuthServices()) {
             if (service.onActivityResult(requestCode, resultCode, data)) {
                 return true;
             }
@@ -187,7 +248,7 @@ public class LoginManager implements AuthCallback, PreferenceManager.OnActivityR
      * Initializes all auth services
      */
     public void init() {
-        for (AuthService service : services.values()) {
+        for (AuthService service : getAuthServices()) {
             service.init(this);
         }
     }

@@ -75,7 +75,7 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
     @Bind(R.id.login_name)
     TextView nameText;
 
-    private boolean initialized = false;
+    private final Object authEventsLock = new Object();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -107,8 +107,13 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
         super.onPause();
 
         loginButtons.removeAllViews();
+    }
 
-        initialized = false;
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        getProgressbar().setIndeterminate(false);
     }
 
     @Override
@@ -118,22 +123,44 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
     }
 
     private void initOrUpdate() {
-        AuthData authData = loginManager.getLastAuthData();
-        boolean loggedIn = authData != null && authData.isLoggedIn();
+        synchronized (authEventsLock) {
+            AuthData authData = loginManager.getLastAuthData();
+            boolean loggedIn = authData != null && authData.isLoggedIn();
+            boolean initialized = loginManager.isInitialized();
+            boolean isBusy = loginManager.isBusy();
 
-        if (!initialized && !loginManager.isBusy() && !loggedIn) {
-            initialized = true;
-            loginManager.init();
-        } else {
-            loginButtons.setVisibility(loggedIn ? View.GONE : View.VISIBLE);
-            loginInfo.setVisibility(loggedIn ? View.VISIBLE : View.GONE);
+            getProgressbar().setIndeterminate(isBusy);
 
-            nameText.setText(authData.getDisplayName());
+            if (loggedIn) {
+                displayAuthData(authData);
+            } else if (!loginManager.isBusy() && !initialized) {
+                loginManager.init();
+            } else if (initialized) {
+                displayLoginButtons();
+            }
+        }
+    }
+
+    private void displayAuthData(AuthData authData) {
+        loginButtons.setVisibility(View.GONE);
+        loginInfo.setVisibility(View.VISIBLE);
+
+        nameText.setText(authData.getDisplayName());
+    }
+
+    private void displayLoginButtons() {
+        loginButtons.setVisibility(View.VISIBLE);
+        loginInfo.setVisibility(View.GONE);
+
+        loginButtons.removeAllViews();
+        for(String serviceId : loginManager.getAuthServiceIds()) {
+            loginButtons.addView(createButton(serviceId));
         }
     }
 
     @OnClick(R.id.logout_button)
     protected void logout() {
+        getProgressbar().setIndeterminate(true);
         loginManager.logout();
     }
 
@@ -159,8 +186,12 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
 
     @Subscribe
     public void onAuthInit(AuthInit authInit) {
+        onAuthEvent(authInit);
+    }
+
+    private View createButton(String serviceId) {
         View button;
-        switch (authInit.getAuthServiceId()) {
+        switch (serviceId) {
             case GooglePlus.ID:
                 button = new SignInButton(activity);
                 break;
@@ -174,14 +205,14 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
         if (button != null) {
             button.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             button.setOnClickListener(this);
-            loginButtons.addView(button);
         }
 
-        onAuthEvent(authInit);
+        return button;
     }
 
     @Override
     public void onClick(View v) {
+        getProgressbar().setIndeterminate(true);
         if (v instanceof SignInButton) {
             loginManager.login(GooglePlus.ID);
         } else if (v instanceof LoginButton) {

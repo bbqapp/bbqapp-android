@@ -118,6 +118,7 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
     public void onConnected(Bundle bundle) {
         if (operationLogin) {
             Person person = Plus.PeopleApi.getCurrentPerson(googleApiClient);
+            final String id = person.getId();
             final String displayName = person.getDisplayName();
             final Person.Image image = person.getImage();
             final String imageUrl = image.hasUrl() ? image.getUrl() : null;
@@ -130,7 +131,7 @@ public class GooglePlus extends AbstractAuthService implements GoogleApiClient.C
                 protected Void doInBackground(Void... params) {
                     try {
                         String token = GoogleAuthUtil.getToken(activity, accountName, "oauth2:" + Plus.SCOPE_PLUS_LOGIN);
-                        authData = createAuthData(token, displayName, imageUrl);
+                        authData = createAuthData(id, token, displayName, imageUrl);
                     } catch (IOException | GoogleAuthException e) {
                         cause = e;
                     }

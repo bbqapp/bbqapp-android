@@ -28,6 +28,7 @@ package org.bbqapp.android.auth;
  * Holder of authentication information
  */
 public class AuthData extends AbstractAuthEvent {
+    private String id;
     private String token;
     private String displayName;
     private String imageUrl;
@@ -36,11 +37,16 @@ public class AuthData extends AbstractAuthEvent {
         super(authServiceId);
     }
 
-    AuthData(String authServiceId, String token, String displayName, String imageUrl) {
+    AuthData(String authServiceId, String id, String token, String displayName, String imageUrl) {
         this(authServiceId);
+        this.id = id;
         this.token = token;
         this.displayName = displayName;
         this.imageUrl = imageUrl;
+    }
+
+    public String getId() {
+        return id;
     }
 
     public String getToken() {

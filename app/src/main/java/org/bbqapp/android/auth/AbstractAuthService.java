@@ -94,8 +94,8 @@ abstract class AbstractAuthService implements AuthService {
         return new AuthData(getId());
     }
 
-    protected AuthData createAuthData(String token, String displayName, String imageUrl) {
-        return new AuthData(getId(), token, displayName, imageUrl);
+    protected AuthData createAuthData(String id, String token, String displayName, String imageUrl) {
+        return new AuthData(getId(), id, token, displayName, imageUrl);
     }
 
     protected AuthError createAuthError(String message) {

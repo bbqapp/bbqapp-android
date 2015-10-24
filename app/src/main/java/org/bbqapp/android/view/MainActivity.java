@@ -33,6 +33,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.widget.ListView;
@@ -84,11 +85,11 @@ public class MainActivity extends AppCompatActivity {
     @Inject
     LoginManager loginManager;
 
-    private enum View {
-        LOGIN, MAP, LIST, SEARCH, CREATE, SETTINGS, CONTACT, NOTICE, FOOTER;
+    private enum FragmentView {
+        LOGIN, MAP, LIST, SEARCH, CREATE, SETTINGS, CONTACT, NOTICE, FOOTER
     }
 
-    private Map<MenuAdapter.Entry, View> menuEntries = new HashMap<>();
+    private Map<MenuAdapter.Entry, FragmentView> menuEntries = new HashMap<>();
 
     private MenuAdapter.Header loginHeader;
 
@@ -123,17 +124,17 @@ public class MainActivity extends AppCompatActivity {
         // list view
         ListView menuList = (ListView) findViewById(R.id.menu_list);
         menuListAdapter = new MenuAdapter(inflater, menuList);
-        loginHeader = menuListAdapter.addHeader(getCaption(View.LOGIN));
-        menuEntries.put(loginHeader, View.LOGIN);
-        menuEntries.put(menuListAdapter.add(getCaption(View.MAP)), View.MAP);
-        menuEntries.put(menuListAdapter.add(getCaption(View.LIST)), View.LIST);
-        menuEntries.put(menuListAdapter.add(getCaption(View.SEARCH)), View.SEARCH);
-        menuEntries.put(menuListAdapter.add(getCaption(View.CREATE)), View.CREATE);
+        loginHeader = menuListAdapter.addHeader(getCaption(FragmentView.LOGIN));
+        menuEntries.put(loginHeader, FragmentView.LOGIN);
+        menuEntries.put(menuListAdapter.add(getCaption(FragmentView.MAP)), FragmentView.MAP);
+        menuEntries.put(menuListAdapter.add(getCaption(FragmentView.LIST)), FragmentView.LIST);
+        menuEntries.put(menuListAdapter.add(getCaption(FragmentView.SEARCH)), FragmentView.SEARCH);
+        menuEntries.put(menuListAdapter.add(getCaption(FragmentView.CREATE)), FragmentView.CREATE);
         menuListAdapter.add();
-        menuEntries.put(menuListAdapter.add(getCaption(View.SETTINGS)), View.SETTINGS);
-        menuEntries.put(menuListAdapter.add(getCaption(View.CONTACT)), View.CONTACT);
-        menuEntries.put(menuListAdapter.add(getCaption(View.NOTICE)), View.NOTICE);
-        menuEntries.put(menuListAdapter.addFooter(BuildConfig.VERSION_NAME), View.FOOTER);
+        menuEntries.put(menuListAdapter.add(getCaption(FragmentView.SETTINGS)), FragmentView.SETTINGS);
+        menuEntries.put(menuListAdapter.add(getCaption(FragmentView.CONTACT)), FragmentView.CONTACT);
+        menuEntries.put(menuListAdapter.add(getCaption(FragmentView.NOTICE)), FragmentView.NOTICE);
+        menuEntries.put(menuListAdapter.addFooter(BuildConfig.VERSION_NAME), FragmentView.FOOTER);
         menuListAdapter.setOnEntryClickListener(new MenuAdapter.OnEntryClickListener() {
             @Override
             public void onEntryClick(ListView listView, MenuAdapter.Entry entry, int position, long id) {
@@ -144,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
 
         Fragment fragment = getFragmentManager().findFragmentById(R.id.content_frame);
         if (fragment == null) {
-            navigateTo(View.MAP, false);
+            navigateTo(FragmentView.MAP, false);
         }
     }
 
@@ -156,7 +157,11 @@ public class MainActivity extends AppCompatActivity {
 
         onAuthData(loginManager.getLastAuthData());
 
-        loginManager.login();
+        try {
+            loginManager.login();
+        } catch(Exception e) {
+            Log.e(TAG, "error occurred during login process", e);
+        }
     }
 
     @Override
@@ -181,22 +186,22 @@ public class MainActivity extends AppCompatActivity {
         return toolbarProgressBar;
     }
 
-    protected String getCaption(View view) {
-        int id = getResources().getIdentifier("menu_" + view.toString().toLowerCase(), "string", getPackageName());
-        return id > 0 ? (String) getResources().getText(id) : view.name();
+    protected String getCaption(FragmentView fragmentView) {
+        int id = getResources().getIdentifier("menu_" + fragmentView.toString().toLowerCase(), "string", getPackageName());
+        return id > 0 ? (String) getResources().getText(id) : fragmentView.name();
     }
 
-    public void navigateTo(View view) {
-        navigateTo(view, true);
+    public void navigateTo(FragmentView fragmentView) {
+        navigateTo(fragmentView, true);
     }
 
-    public void navigateTo(View view, boolean addToBackStack) {
+    public void navigateTo(FragmentView fragmentView, boolean addToBackStack) {
         menu.closeDrawers();
 
-        // inflate new view
-        Fragment fragment = findFragmentByView(view);
+        // inflate new fragmentView
+        Fragment fragment = findFragmentByFragmentView(fragmentView);
         if (fragment == null) {
-            switch (view) {
+            switch (fragmentView) {
                 case LOGIN:
                     fragment = new LoginFragment();
                     break;
@@ -218,7 +223,7 @@ public class MainActivity extends AppCompatActivity {
 
         FragmentManager fragmentManager = getFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.content_frame, fragment, view.name());
+        fragmentTransaction.replace(R.id.content_frame, fragment, fragmentView.name());
         fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
         if (addToBackStack) {
             fragmentTransaction.addToBackStack(null);
@@ -227,13 +232,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Finds a fragment by view
+     * Finds a fragment by fragmentView
      *
-     * @param view fragment of view to find
+     * @param fragmentView fragment view to find
      * @return found fragment or {@code null} otherwise
      */
-    private Fragment findFragmentByView(View view) {
-        return getFragmentManager().findFragmentByTag(view.name());
+    private Fragment findFragmentByFragmentView(FragmentView fragmentView) {
+        return getFragmentManager().findFragmentByTag(fragmentView.name());
     }
 
     @Override
@@ -248,10 +253,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (menuToggle.onOptionsItemSelected(item)) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+        return menuToggle.onOptionsItemSelected(item) || super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -259,8 +261,8 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         // propagate results to child fragments
-        for (View view : View.values()) {
-            Fragment fragment = findFragmentByView(view);
+        for (FragmentView fragmentView : FragmentView.values()) {
+            Fragment fragment = findFragmentByFragmentView(fragmentView);
             if (fragment != null) {
                 fragment.onActivityResult(requestCode, resultCode, data);
             }
@@ -283,7 +285,7 @@ public class MainActivity extends AppCompatActivity {
         } else if (authData != null) {
             Toast.makeText(this, "Logged out.", Toast.LENGTH_LONG).show();
 
-            loginHeader.setString(getCaption(View.LOGIN));
+            loginHeader.setString(getCaption(FragmentView.LOGIN));
         }
     }
 
