@@ -29,7 +29,7 @@
     android:layout_height="match_parent"
     android:gravity="bottom">
     <fragment android:id="@+id/google_map"
-              class="com.google.android.gms.maps.MapFragment"
+              class="com.google.android.gms.maps.SupportMapFragment"
               xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"

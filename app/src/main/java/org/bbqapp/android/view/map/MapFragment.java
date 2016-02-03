@@ -42,6 +42,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
@@ -99,8 +100,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
 
             view.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
 
-            com.google.android.gms.maps.MapFragment mapFragment = (com.google.android.gms.maps.MapFragment)
-                    getChildFragmentManager().findFragmentById(R.id.google_map);
+            SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.google_map);
             mapFragment.getMapAsync(this);
         }
         return view;

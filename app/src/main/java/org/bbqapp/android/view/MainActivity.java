@@ -24,9 +24,9 @@
 
 package org.bbqapp.android.view;
 
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
@@ -61,7 +61,6 @@ import butterknife.ButterKnife;
 import dagger.ObjectGraph;
 import de.halfbit.tinybus.Subscribe;
 import de.halfbit.tinybus.TinyBus;
-
 
 public class MainActivity extends AppCompatActivity {
 
@@ -143,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        Fragment fragment = getFragmentManager().findFragmentById(R.id.content_frame);
+        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.content_frame);
         if (fragment == null) {
             navigateTo(FragmentView.MAP, false);
         }
@@ -221,10 +220,10 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        FragmentManager fragmentManager = getFragmentManager();
+        FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.content_frame, fragment, fragmentView.name());
-        fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+        fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         if (addToBackStack) {
             fragmentTransaction.addToBackStack(null);
         }
@@ -238,17 +237,7 @@ public class MainActivity extends AppCompatActivity {
      * @return found fragment or {@code null} otherwise
      */
     private Fragment findFragmentByFragmentView(FragmentView fragmentView) {
-        return getFragmentManager().findFragmentByTag(fragmentView.name());
-    }
-
-    @Override
-    public void onBackPressed() {
-        FragmentManager fragmentManager = getFragmentManager();
-        if (fragmentManager.getBackStackEntryCount() > 0) {
-            fragmentManager.popBackStack();
-        } else {
-            super.onBackPressed();
-        }
+        return getSupportFragmentManager().findFragmentByTag(fragmentView.name());
     }
 
     @Override
