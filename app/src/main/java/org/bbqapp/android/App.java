@@ -27,6 +27,7 @@ package org.bbqapp.android;
 import android.app.Application;
 
 import dagger.ObjectGraph;
+import timber.log.Timber;
 
 /**
  * Application to maintain global states
@@ -37,6 +38,10 @@ public class App extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        if (BuildConfig.DEBUG) {
+            Timber.plant(new Timber.DebugTree());
+        }
 
         // dagger
         AppModule module = new AppModule(this);
