@@ -44,15 +44,19 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import rx.Subscription;
+import rx.functions.Action1;
+
 /**
  * Fragment to display places in a clickable list
  */
-public class ListFragment extends BaseFragment implements LocationService.OnLocationListener {
+public class ListFragment extends BaseFragment {
 
     private static final String TAG = ListFragment.class.getName();
 
     private ListView placeList;
     private PlaceListAdapter placeAdapter;
+    private Subscription locationSubscription;
 
     @Inject
     LayoutInflater layoutInflater;
@@ -78,20 +82,22 @@ public class ListFragment extends BaseFragment implements LocationService.OnLoca
 
         placeAdapter = new PlaceListAdapter(layoutInflater);
         placeList.setAdapter(placeAdapter);
-        Location l = locationService.getLocation();
-        placeAdapter.setLocation(l);
 
         getActivity().setTitle(R.string.menu_list);
-        locationService.addOnLocationListener(this);
+        locationSubscription = locationService.getLocation().subscribe(new Action1<Location>() {
+            @Override
+            public void call(Location location) {
+                onLocationChanged(location);
+            }
+        });
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        locationService.removeOnLocationListener(this);
+        locationSubscription.unsubscribe();
     }
 
-    @Override
     public void onLocationChanged(Location location) {
         placeAdapter.setLocation(location);
 

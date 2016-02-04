@@ -29,6 +29,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Address;
+import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -63,6 +64,8 @@ import javax.inject.Inject;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import rx.Subscription;
+import rx.functions.Action1;
 
 /**
  * Fragment to create new places
@@ -74,13 +77,20 @@ public class CreateFragment extends BaseFragment {
 
     private View view;
 
-    @Bind(R.id.view_create_take_picture) Button takePictureButton;
-    @Bind(R.id.view_create_create) Button createButton;
-    @Bind(R.id.view_create_picture) ImageView imageView;
-    @Bind(R.id.view_create_progress_bar) ProgressBar progressBar;
-    @Bind(R.id.view_create_progress_text) TextView progressText;
-    @Bind(R.id.view_create_location) EditText locationEditText;
-    @Bind(R.id.view_create_address) TextView addressText;
+    @Bind(R.id.view_create_take_picture)
+    Button takePictureButton;
+    @Bind(R.id.view_create_create)
+    Button createButton;
+    @Bind(R.id.view_create_picture)
+    ImageView imageView;
+    @Bind(R.id.view_create_progress_bar)
+    ProgressBar progressBar;
+    @Bind(R.id.view_create_progress_text)
+    TextView progressText;
+    @Bind(R.id.view_create_location)
+    EditText locationEditText;
+    @Bind(R.id.view_create_address)
+    TextView addressText;
 
     private File image = null;
 
@@ -92,6 +102,9 @@ public class CreateFragment extends BaseFragment {
 
     @Inject
     Places placesEP;
+
+    private Subscription subscriber;
+    private boolean finished = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -109,27 +122,40 @@ public class CreateFragment extends BaseFragment {
 
         getActivity().setTitle(R.string.menu_create);
 
-        android.location.Location location = locationService.getLocation();
-        locationEditText.setText(new Point(location).toString());
-
-        asyncGeocoder.resolve(location, new AsyncGeocoder.Callback() {
+        subscriber = locationService.getLocation().subscribe(new Action1<Location>() {
             @Override
-            public void onSuccess(Address address) {
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < address.getMaxAddressLineIndex(); i++) {
-                    sb.append(address.getAddressLine(i));
-                    sb.append("\n");
+            public void call(Location location) {
+                if (location.getAccuracy() <= 50) {
+                    locationEditText.setText(new Point(location).toString());
+                    asyncGeocoder.resolve(location, new AsyncGeocoder.Callback() {
+                        @Override
+                        public void onSuccess(Address address) {
+                            StringBuilder sb = new StringBuilder();
+                            for (int i = 0; i < address.getMaxAddressLineIndex(); i++) {
+                                sb.append(address.getAddressLine(i));
+                                sb.append("\n");
+                            }
+                            sb.deleteCharAt(sb.length() - 1);
+
+                            addressText.setText(sb.toString());
+                        }
+
+                        @Override
+                        public void onFailure(Exception cause) {
+                            addressText.setText(cause.getLocalizedMessage());
+                        }
+                    });
+
+                    if (subscriber != null) {
+                        subscriber.unsubscribe();
+                    }
                 }
-                sb.deleteCharAt(sb.length() - 1);
-
-                addressText.setText(sb.toString());
-            }
-
-            @Override
-            public void onFailure(Exception cause) {
-                addressText.setText(cause.getLocalizedMessage());
             }
         });
+
+        if (finished) {
+            subscriber.unsubscribe();
+        }
     }
 
     @Override
@@ -137,6 +163,8 @@ public class CreateFragment extends BaseFragment {
         super.onDestroy();
         ButterKnife.unbind(this);
         view = null;
+
+        subscriber.unsubscribe();
     }
 
     @Override

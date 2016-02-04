@@ -24,15 +24,19 @@
 
 package org.bbqapp.android.service;
 
-import android.content.Context;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import rx.Observable;
+import rx.Subscriber;
+import timber.log.Timber;
 
 /**
  * Location service to retrieve geo coordinates of current device location
@@ -42,31 +46,40 @@ public final class LocationService implements LocationListener {
 
     private LocationManager locationManager;
 
+    private boolean requestedUpdates = false;
+
     private Location lastLocation;
 
-    private Set<OnLocationListener> onLocationListeners = new HashSet<>();
+    private Set<Subscriber<? super Location>> subscribers =
+            Collections.synchronizedSet(new HashSet<Subscriber<? super Location>>());
+    private Observable<Location> observable = Observable.create(new Observable.OnSubscribe<Location>() {
+        @Override
+        public void call(Subscriber<? super Location> subscriber) {
+            onSubscription(subscriber);
+        }
+    });
 
     private LocationService(LocationManager locationManager) {
         this.locationManager = locationManager;
+    }
 
-        // set last location
-        lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        if (lastLocation == null) {
-            lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-        }
-        if (lastLocation == null) {
-            lastLocation = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
+    private void onSubscription(Subscriber<? super Location> subscriber) {
+        try {
+            Location location = getBestLastLocation();
+            subscribers.add(subscriber);
+
+            if (location != null) {
+                subscriber.onNext(location);
+            }
+
+            enableOrDisable();
+        } catch (SecurityException e) {
+            subscriber.onError(e);
         }
     }
 
-    /**
-     * Returns {@link LocationService}
-     *
-     * @param context application context
-     * @return instance of {@link LocationService}
-     */
-    public static LocationService getService(Context context) {
-        return getService((LocationManager) context.getSystemService(Context.LOCATION_SERVICE));
+    public Observable<Location> getLocation() {
+        return observable;
     }
 
     /**
@@ -87,21 +100,46 @@ public final class LocationService implements LocationListener {
         return instance;
     }
 
-    /**
-     * Returns last known position or {@code null}
-     *
-     * @return last known position
-     */
-    public Location getLocation() {
-        return lastLocation;
+    protected Location getBestLastLocation() {
+        return lastLocation != null ? lastLocation : getLastKnownLocation();
+    }
+
+    protected Location getLastKnownLocation() throws SecurityException {
+        Location location = getLastLocation(LocationManager.GPS_PROVIDER);
+
+        if (location == null) {
+            location = getLastLocation(LocationManager.NETWORK_PROVIDER);
+        }
+        if (location == null) {
+            location = getLastLocation(LocationManager.PASSIVE_PROVIDER);
+        }
+
+        return location;
+    }
+
+    protected Location getLastLocation(String provider) throws SecurityException {
+        try {
+            return locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
+        } catch (IllegalArgumentException e) {
+            Timber.e(e, "Could not get last known exception of provider %s", provider);
+            return null;
+        }
+
     }
 
     @Override
     public void onLocationChanged(Location location) {
         lastLocation = location;
 
-        for (OnLocationListener listener : onLocationListeners) {
-            listener.onLocationChanged(location);
+        try {
+            enableOrDisable();
+            for (Subscriber<? super Location> subscriber : subscribers) {
+                subscriber.onNext(location);
+            }
+        } catch (SecurityException e) {
+            for (Subscriber<? super Location> subscriber : subscribers) {
+                subscriber.onError(e);
+            }
         }
     }
 
@@ -126,52 +164,31 @@ public final class LocationService implements LocationListener {
         return criteria;
     }
 
-    /**
-     * Checks if location service is enabled and listeners ({@link LocationService.OnLocationListener}) are added
-     *
-     * @return {@code true} if service is enabled and at lest listener exists otherwise {@code false}
-     */
-    public boolean isEnabled() {
-        return !onLocationListeners.isEmpty();
-    }
+    protected void enableOrDisable() throws SecurityException {
+        boolean enabled = clearSubscribers();
 
-    protected void enableOrDisable() {
-        if (isEnabled()) {
+        if (enabled && !requestedUpdates) {
             locationManager.requestLocationUpdates(0, 0, getProviderCriteria(), this, null);
-        } else {
+        } else if (!enabled && requestedUpdates) {
             locationManager.removeUpdates(this);
         }
+        requestedUpdates = enabled;
     }
 
-    /**
-     * Adds listener to notify about location changes
-     *
-     * @param listener listener to add
-     */
-    public void addOnLocationListener(OnLocationListener listener) {
-        onLocationListeners.add(listener);
-        enableOrDisable();
-    }
+    private boolean clearSubscribers() {
+        boolean enabled = false;
 
-    /**
-     * Removes added listener
-     *
-     * @param listener listener to remove
-     */
-    public void removeOnLocationListener(OnLocationListener listener) {
-        onLocationListeners.remove(listener);
-        enableOrDisable();
-    }
+        Set<Subscriber<? super Location>> unsubscribedSubscribers = new HashSet<>();
+        for (Subscriber<? super Location> subscriber : subscribers) {
+            boolean unsubscribed = subscriber.isUnsubscribed();
+            if (unsubscribed) {
+                unsubscribedSubscribers.add(subscriber);
+            }
 
-    /**
-     * Location change listener
-     */
-    public interface OnLocationListener {
-        /**
-         * Gets called when location has been changed
-         *
-         * @param location new location
-         */
-        void onLocationChanged(Location location);
+            enabled = enabled || !unsubscribed;
+        }
+        subscribers.removeAll(unsubscribedSubscribers);
+
+        return enabled;
     }
 }

@@ -66,13 +66,16 @@ import javax.inject.Inject;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import rx.Observable;
+import rx.Subscription;
+import rx.functions.Action1;
 
-public class MapFragment extends BaseFragment implements OnMapReadyCallback, LocationSource, GoogleMap
-        .OnMapClickListener, GoogleMap.OnCameraChangeListener, LocationService.OnLocationListener, PlaceClusterManager
-        .OnPlaceSelectionListener {
+public class MapFragment extends BaseFragment implements OnMapReadyCallback, LocationSource,
+        GoogleMap.OnMapClickListener, GoogleMap.OnCameraChangeListener, PlaceClusterManager.OnPlaceSelectionListener {
     private static final String TAG = MapFragment.class.getName();
 
     private GoogleMap map;
+    private Subscription locationSubscription;
 
     @Bind(R.id.view_detail_image)
     ImageView imageView;
@@ -80,6 +83,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
     TextView tx;
 
     private OnLocationChangedListener onLocationChangedListener;
+    private Observable<Location> cachedlocationObservable;
 
     SlidingUpPanelLayout view;
 
@@ -111,14 +115,20 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
         super.onResume();
         getActivity().setTitle(R.string.menu_map);
 
-        locationService.addOnLocationListener(this);
+        cachedlocationObservable = locationService.getLocation();//.cache(1);
+        locationSubscription = cachedlocationObservable.subscribe(new Action1<Location>() {
+            @Override
+            public void call(Location location) {
+                onLocationChanged(location);
+            }
+        });
     }
 
     @Override
     public void onPause() {
         super.onPause();
 
-        locationService.removeOnLocationListener(this);
+        locationSubscription.unsubscribe();
     }
 
     @Override
@@ -147,21 +157,24 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
         map.setMyLocationEnabled(true);
         map.setOnMapClickListener(this);
 
-        Location l = locationService.getLocation();
-        if (l != null) {
-            LatLng latLng = new LatLng(l.getLatitude(), l.getLongitude());
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 13));
-        }
+        cachedlocationObservable.subscribe(new Action1<Location>() {
+            @Override
+            public void call(Location l) {
+                LatLng latLng = new LatLng(l.getLatitude(), l.getLongitude());
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 13));
+            }
+        }).unsubscribe();
     }
 
     @Override
     public void activate(OnLocationChangedListener onLocationChangedListener) {
         this.onLocationChangedListener = onLocationChangedListener;
-
-        Location l = locationService.getLocation();
-        if (l != null) {
-            onLocationChangedListener.onLocationChanged(l);
-        }
+        cachedlocationObservable.subscribe(new Action1<Location>() {
+            @Override
+            public void call(Location l) {
+                MapFragment.this.onLocationChangedListener.onLocationChanged(l);
+            }
+        }).unsubscribe();
     }
 
     @Override
@@ -169,7 +182,6 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
         onLocationChangedListener = null;
     }
 
-    @Override
     public void onLocationChanged(Location location) {
         if (onLocationChangedListener != null) {
             onLocationChangedListener.onLocationChanged(location);
