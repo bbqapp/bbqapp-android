@@ -52,7 +52,7 @@ public class LatLngConverterFactory extends Converter.Factory {
     private class LatLngConverter implements Converter<LatLng, String> {
         @Override
         public String convert(LatLng value) throws IOException {
-            return value.latitude + "," + value.longitude;
+            return value.longitude + "," + value.latitude;
         }
     }
 }

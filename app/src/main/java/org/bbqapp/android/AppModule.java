@@ -27,10 +27,16 @@ package org.bbqapp.android;
 import android.content.Context;
 import android.location.LocationManager;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import org.bbqapp.android.api.converter.PictureConverterFactory;
 import org.bbqapp.android.api.converter.LatLngConverterFactory;
 import org.bbqapp.android.api.converter.LocationConverterFactory;
+import org.bbqapp.android.api.converter.IdConverterFactory;
 import org.bbqapp.android.api.service.PlaceService;
 
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -41,6 +47,7 @@ import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import rx.Scheduler;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * Application module to hold global states
@@ -73,10 +80,18 @@ public class AppModule {
 
     @Provides
     @Singleton
-    Retrofit provideRetrofit() {
+    Gson provideGson() {
+        return new GsonBuilder().create();
+    }
+
+    @Provides
+    @Singleton
+    Retrofit provideRetrofit(Gson gson) {
         return new Retrofit.Builder()
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create())
+                .addConverterFactory(PictureConverterFactory.create())
+                .addConverterFactory(IdConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create(gson))
                 .addConverterFactory(LocationConverterFactory.create())
                 .addConverterFactory(LatLngConverterFactory.create())
                 .baseUrl("http://bbqapp.org")
@@ -90,7 +105,14 @@ public class AppModule {
     }
 
     @Provides
-    Scheduler provideScheduler() {
+    @Named("main")
+    Scheduler provideMainScheduler() {
         return AndroidSchedulers.mainThread();
+    }
+
+    @Provides
+    @Named("io")
+    Scheduler provideIoScheduler() {
+        return Schedulers.io();
     }
 }

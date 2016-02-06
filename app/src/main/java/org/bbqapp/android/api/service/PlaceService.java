@@ -26,6 +26,8 @@ package org.bbqapp.android.api.service;
 
 import android.location.Location;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import org.bbqapp.android.api.model.Id;
 import org.bbqapp.android.api.model.Picture;
 import org.bbqapp.android.api.model.PictureInfo;
@@ -55,6 +57,9 @@ public interface PlaceService {
     Observable<List<Place>> getPlaces(@Query("location") String location, @Query("radius") long radius);
 
     @GET("/api/places")
+    Observable<List<Place>> getPlaces(@Query("location") LatLng location, @Query("radius") long radius);
+
+    @GET("/api/places")
     Observable<List<Place>> getPlaces(@Query("location") Location location, @Query("radius") long radius);
 
     @POST("/api/places")
@@ -63,12 +68,21 @@ public interface PlaceService {
     @GET("/api/places/{placeId}/pictures/{imageId}")
     Observable<Picture> getPicture(@Path("placeId") String placeId, @Path("imageId") String imageId);
 
+    @GET("/api/places/{placeId}/pictures/{imageId}")
+    Observable<Picture> getPicture(@Path("placeId") Id placeId, @Path("imageId") Id imageId);
+
     @GET("/api{pictureUrl}")
     Observable<Picture> getPicture(@Path(value = "pictureUrl", encoded = true) String pictureUrl);
 
     @POST("/api/places/{placeId}/pictures")
     Observable<Id> postPicture(@Path("placeId") String placeId, @Body Picture picture);
 
+    @POST("/api/places/{placeId}/pictures")
+    Observable<Id> postPicture(@Path("placeId") Id placeId, @Body Picture picture);
+
     @GET("/api/places/{placeId}/pictures")
     Observable<List<PictureInfo>> getPicturesInfo(@Path("placeId") String placeId);
+
+    @GET("/api/places/{placeId}/pictures")
+    Observable<List<PictureInfo>> getPicturesInfo(@Path("placeId") Id placeId);
 }

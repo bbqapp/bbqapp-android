@@ -41,6 +41,7 @@ import org.bbqapp.android.view.BaseFragment;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import rx.Scheduler;
 import rx.Subscriber;
@@ -52,8 +53,6 @@ import rx.schedulers.Schedulers;
  * Fragment to display places in a clickable list
  */
 public class ListFragment extends BaseFragment {
-
-    private static final String TAG = ListFragment.class.getName();
 
     private ListView placeList;
     private PlaceListAdapter placeAdapter;
@@ -68,6 +67,7 @@ public class ListFragment extends BaseFragment {
     @Inject
     PlaceService placeService;
     @Inject
+    @Named("main")
     Scheduler scheduler;
 
     @Override
@@ -107,7 +107,6 @@ public class ListFragment extends BaseFragment {
         if (placeAdapter.getList() == null) {
             placeService.getPlaces(location, 10000)
                     .subscribeOn(Schedulers.io())
-                    .take(1)
                     .observeOn(scheduler)
                     .unsubscribeOn(Schedulers.io())
                     .subscribe(new Subscriber<List<Place>>() {

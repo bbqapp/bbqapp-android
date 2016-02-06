@@ -52,7 +52,7 @@ public class LocationConverterFactory extends Converter.Factory {
     private class LocationConverter implements Converter<Location, String> {
         @Override
         public String convert(Location value) throws IOException {
-            return value.getLatitude() + "," + value.getLongitude();
+            return value.getLongitude() + "," + value.getLatitude();
         }
     }
 }

@@ -25,7 +25,7 @@
 package org.bbqapp.android.api;
 
 /**
- * AuthCallback interface to notify about progress changes
+ * Progress listener interface to notify about progress changes
  */
 public interface ProgressListener {
 

@@ -28,7 +28,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -49,12 +48,10 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.bbqapp.android.R;
-import org.bbqapp.android.api.Callback;
-import org.bbqapp.android.api.exception.ApiException;
 import org.bbqapp.android.api.model.Picture;
 import org.bbqapp.android.api.model.PictureInfo;
 import org.bbqapp.android.api.model.Place;
-import org.bbqapp.android.api.service.Places;
+import org.bbqapp.android.api.service.PlaceService;
 import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.view.BaseFragment;
 
@@ -63,11 +60,19 @@ import java.util.List;
 import java.util.Random;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import rx.Observable;
+import rx.Scheduler;
+import rx.Subscriber;
 import rx.Subscription;
+import rx.exceptions.Exceptions;
 import rx.functions.Action1;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
+import timber.log.Timber;
 
 public class MapFragment extends BaseFragment implements OnMapReadyCallback, LocationSource,
         GoogleMap.OnMapClickListener, GoogleMap.OnCameraChangeListener, PlaceClusterManager.OnPlaceSelectionListener {
@@ -88,7 +93,13 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
     SlidingUpPanelLayout view;
 
     @Inject
-    Places placesEP;
+    PlaceService placeService;
+    @Inject
+    @Named("main")
+    Scheduler mainScheduler;
+    @Inject
+    @Named("io")
+    Scheduler ioScheduler;
     @Inject
     LocationService locationService;
     @Inject
@@ -206,56 +217,83 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
 
         getProgressbar().setIndeterminate(true);
 
-        placesEP.getPlaces(target.longitude + "," + target.latitude, radius, new Callback<List<Place>>() {
+        placeService.getPlaces(target, radius)
+                .subscribeOn(Schedulers.io())
+                .observeOn(mainScheduler)
+                .unsubscribeOn(Schedulers.io())
+                .subscribe(new Subscriber<List<Place>>() {
+                    @Override
+                    public void onCompleted() {
+                    }
 
-            @Override
-            public void onSuccess(List<Place> places) {
-                Log.i(TAG, "Received " + places.size() + " places");
-                placeClusterManager.setPlaces(places);
-                getProgressbar().setIndeterminate(false);
-            }
+                    @Override
+                    public void onError(Throwable e) {
+                        Toast.makeText(getActivity(), e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                    }
 
-            @Override
-            public void onFailure(ApiException cause) {
-                Toast.makeText(getActivity(), cause.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
+                    @Override
+                    public void onNext(List<Place> places) {
+                        Log.i(TAG, "Received " + places.size() + " places");
+                        placeClusterManager.setPlaces(places);
+                        getProgressbar().setIndeterminate(false);
+                    }
+                });
     }
 
     public void setPlace(final Place place) {
-        new AsyncTask<Void, Void, BitmapDrawable>() {
+        placeService.getPicturesInfo(place)
+                .subscribeOn(ioScheduler)
+                .unsubscribeOn(ioScheduler)
+                .flatMap(new Func1<List<PictureInfo>, Observable<Picture>>() {
+                    @Override
+                    public Observable<Picture> call(List<PictureInfo> picturesInfo) {
+                        if (!picturesInfo.isEmpty()) {
+                            int index = new Random().nextInt(picturesInfo.size());
+                            PictureInfo pictureInfo = picturesInfo.get(index);
 
-            @Override
-            protected BitmapDrawable doInBackground(Void... params) {
-                List<PictureInfo> picturesInfo = placesEP.getPicturesInfo(place.getId());
-                Log.i(TAG, "images found for " + place.getId() + ": " + picturesInfo.size());
+                            return placeService.getPicture(pictureInfo.getPlaceId(), pictureInfo.getId());
+                        }
 
-                if (!picturesInfo.isEmpty()) {
-                    int index = new Random().nextInt(picturesInfo.size());
-                    PictureInfo pictureInfo = picturesInfo.get(index);
-
-                    Log.i(TAG, "load image " + pictureInfo.getMeta().getUrl());
-                    Picture picture = placesEP.getPicture(pictureInfo.getMeta().getUrl());
-
-                    try {
-                        Bitmap bitmap = BitmapFactory.decodeStream(picture.in());
-                        int nh = (int) (bitmap.getHeight() * (512.0 / bitmap.getWidth()));
-                        bitmap = Bitmap.createScaledBitmap(bitmap, 512, nh, true);
-                        return new BitmapDrawable(getActivity().getResources(), bitmap);
-                    } catch (IOException e) {
-                        Log.e(TAG, e.getLocalizedMessage(), e);
+                        return Observable.just(null);
                     }
-                }
+                })
+                .map(new Func1<Picture, Bitmap>() {
+                    @Override
+                    public Bitmap call(Picture picture) {
+                        if (picture == null) {
+                            return null;
+                        }
+                        try {
+                            Bitmap bitmap = BitmapFactory.decodeStream(picture.in());
+                            int nh = (int) (bitmap.getHeight() * (512.0 / bitmap.getWidth()));
+                            return Bitmap.createScaledBitmap(bitmap, 512, nh, true);
+                        } catch (IOException e) {
+                            Exceptions.propagate(e);
+                            return null; // will never be reached
+                        }
+                    }
+                })
+                .observeOn(mainScheduler)
+                .subscribe(new Subscriber<Bitmap>() {
+                    @Override
+                    public void onCompleted() {
+                    }
 
-                return null;
-            }
+                    @Override
+                    public void onError(Throwable e) {
+                        Timber.e(e, "Could not download picture");
+                    }
 
-            @Override
-            protected void onPostExecute(BitmapDrawable picture) {
-                Log.i(TAG, "image set for: " + place);
-                imageView.setImageDrawable(picture);
-            }
-        }.execute();
+                    @Override
+                    public void onNext(Bitmap bitmap) {
+                        if (bitmap != null) {
+                            imageView.setImageDrawable(new BitmapDrawable(getActivity().getResources(), bitmap));
+                        } else {
+                            imageView.setImageBitmap(null);
+                        }
+                    }
+                });
+
     }
 
     @Override

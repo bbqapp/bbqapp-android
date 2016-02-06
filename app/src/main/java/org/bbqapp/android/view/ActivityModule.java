@@ -30,8 +30,6 @@ import android.location.LocationManager;
 import android.view.LayoutInflater;
 
 import org.bbqapp.android.AppModule;
-import org.bbqapp.android.api.Api;
-import org.bbqapp.android.api.service.Places;
 import org.bbqapp.android.auth.Facebook;
 import org.bbqapp.android.auth.GooglePlus;
 import org.bbqapp.android.geocoding.AsyncGeocoder;
@@ -77,12 +75,6 @@ public class ActivityModule {
     @Singleton
     LayoutInflater provideLayoutInflater(Activity context) {
         return (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    }
-
-    @Provides
-    @Singleton
-    Places providePlaces() {
-        return Api.get(Places.class);
     }
 
     @Provides

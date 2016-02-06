@@ -31,7 +31,6 @@ import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.location.Location;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -51,24 +50,28 @@ import org.bbqapp.android.api.model.Id;
 import org.bbqapp.android.api.model.Picture;
 import org.bbqapp.android.api.model.Place;
 import org.bbqapp.android.api.model.Point;
-import org.bbqapp.android.api.service.Places;
+import org.bbqapp.android.api.service.PlaceService;
 import org.bbqapp.android.geocoding.AsyncGeocoder;
 import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.view.BaseFragment;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import rx.Observable;
 import rx.Scheduler;
+import rx.Subscriber;
 import rx.Subscription;
 import rx.functions.Action1;
 import rx.functions.Func1;
+import timber.log.Timber;
 
 /**
  * Fragment to create new places
@@ -104,10 +107,13 @@ public class CreateFragment extends BaseFragment {
     LocationService locationService;
 
     @Inject
-    Places placesEP;
-
+    PlaceService placeService;
     @Inject
-    Scheduler scheduler;
+    @Named("main")
+    Scheduler mainScheduler;
+    @Inject
+    @Named("io")
+    Scheduler ioScheduler;
 
     private Subscription subscriber;
 
@@ -133,13 +139,13 @@ public class CreateFragment extends BaseFragment {
                 return location.getAccuracy() <= 20 && (System.currentTimeMillis() - location.getTime()) <= 60_000;
             }
         });
-        filteredLocation.take(1).observeOn(scheduler).subscribe(new Action1<Location>() {
+        filteredLocation.take(1).observeOn(mainScheduler).subscribe(new Action1<Location>() {
             @Override
             public void call(Location location) {
                 locationEditText.setText(String.format("%s, %s", location.getLatitude(), location.getLongitude()));
             }
         });
-        subscriber = asyncGeocoder.resolve(filteredLocation).take(1).observeOn(scheduler).subscribe(new Action1<Address>() {
+        subscriber = asyncGeocoder.resolve(filteredLocation).take(1).observeOn(mainScheduler).subscribe(new Action1<Address>() {
             @Override
             public void call(Address address) {
                 StringBuilder sb = new StringBuilder();
@@ -255,35 +261,69 @@ public class CreateFragment extends BaseFragment {
 
         setProgress("Preparing...", null);
 
-        new AsyncTask<Void, Void, Void>() {
+        placeService.postPlace(place)
+                .subscribeOn(ioScheduler)
+                .unsubscribeOn(ioScheduler)
+                .observeOn(mainScheduler)
+                .subscribe(new Subscriber<Id>() {
+                    @Override
+                    public void onCompleted() {
+                    }
 
-            @Override
-            protected Void doInBackground(Void... params) {
-                Id placeResponse = placesEP.postPlace(place);
-                setProgress("Place Created: " + placeResponse.getId(), null);
+                    @Override
+                    public void onError(Throwable e) {
+                        showMessage("Could not create new place");
+                        setProgress("Could not create new place", null);
+                        Timber.e(e, "Could not create new place");
+                    }
 
-                if (image == null) {
-                    return null;
-                }
-
-                try {
-                    Id imageResponse = placesEP.postPicture(placeResponse.getId(), new Picture(image) {
-                        @Override
-                        public void onProgress(long contentLength, long transferred) {
-                            int percent = (int) (transferred / (contentLength / 100));
-                            setProgress("Upload image...", percent);
+                    @Override
+                    public void onNext(Id id) {
+                        setProgress("Place Created: " + id.getId(), image == null ? 100 : null);
+                        if (image == null) {
+                            return;
                         }
-                    });
-                    setProgress("Image uploaded: " + imageResponse.getId(), 100);
-                } catch (IOException e) {
-                    showMessage("Could not upload place picture");
-                    setProgress("Could not upload place picture", null);
-                    Log.e(TAG, "Could not upload place picture", e);
-                }
 
-                return null;
-            }
-        }.execute();
+                        uploadImage(id);
+                    }
+                });
     }
 
+    private void uploadImage(final Id id) {
+        Picture picture = null;
+        try {
+            picture = new Picture(image) {
+                @Override
+                public void onProgress(long contentLength, long transferred) {
+                    int percent = (int) (transferred / (contentLength / 100));
+                    setProgress("Upload image...", percent);
+                }
+            };
+        } catch (FileNotFoundException e) {
+            setProgress("Error occurred while image processing...", null);
+            showMessage("Error occurred while image processing");
+            Timber.e(e, "Error occurred while image processing");
+            return;
+        }
+        placeService.postPicture(id, picture)
+                .subscribeOn(ioScheduler)
+                .unsubscribeOn(ioScheduler)
+                .observeOn(mainScheduler)
+                .subscribe(new Subscriber<Id>() {
+                    @Override
+                    public void onCompleted() {
+                    }
+                    @Override
+                    public void onError(Throwable e) {
+                        showMessage("Could not upload place picture");
+                        setProgress("Could not upload place picture", null);
+                        Log.e(TAG, "Could not upload place picture", e);
+                    }
+
+                    @Override
+                    public void onNext(Id id) {
+                        setProgress("Image uploaded: " + id.getId(), 100);
+                    }
+                });
+    }
 }

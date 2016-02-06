@@ -22,38 +22,37 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android.api;
+package org.bbqapp.android.api.converter;
 
-import org.bbqapp.android.api.exception.ApiException;
+import org.bbqapp.android.api.model.Id;
 
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 
-/**
- * Callback for async API requests
- */
-public abstract class Callback<T> implements retrofit.Callback<T> {
-    @Override
-    public final void success(T t, Response response) {
-        onSuccess(t);
+import retrofit2.Converter;
+import retrofit2.Retrofit;
+
+public class IdConverterFactory extends Converter.Factory {
+    public static IdConverterFactory create() {
+        return new IdConverterFactory();
+    }
+
+    private IdConverterFactory() {
     }
 
     @Override
-    public final void failure(RetrofitError error) {
-        onFailure(ApiErrorHandler.convert(error));
+    public Converter<?, String> stringConverter(Type type, Annotation[] annotations, Retrofit retrofit) {
+        if (type instanceof Class && ((Class<?>) type).isAssignableFrom(Id.class)) {
+            return new IdConverter();
+        }
+        return super.stringConverter(type, annotations, retrofit);
     }
 
-    /**
-     * Success API request
-     *
-     * @param t received object
-     */
-    public abstract void onSuccess(T t);
-
-    /**
-     * Unsuccessful API request
-     *
-     * @param cause request exception
-     */
-    public abstract void onFailure(ApiException cause);
+    private class IdConverter implements Converter<Id, String> {
+        @Override
+        public String convert(Id value) throws IOException {
+            return value.getId();
+        }
+    }
 }

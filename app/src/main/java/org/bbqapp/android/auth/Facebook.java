@@ -84,6 +84,9 @@ public class Facebook extends AbstractAuthService {
 
     @Override
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
-        return callbackManager.onActivityResult(requestCode, resultCode, data);
+        if (callbackManager != null) {
+            return callbackManager.onActivityResult(requestCode, resultCode, data);
+        }
+        return false;
     }
 }
