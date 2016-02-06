@@ -27,69 +27,132 @@ package org.bbqapp.android.geocoding;
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.Location;
 import android.os.AsyncTask;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import rx.Observable;
+import rx.Subscriber;
 
 /**
  * Async geocoder task which is used by {@link AsyncGeocoder}
  */
 class AsyncResolver extends AsyncTask<Void, Void, Void> {
-    private double lat;
-    private double lng;
 
     private String locationName;
+    private Location location;
+    private final int resultsCount = 1;
 
-    private Context context;
-    private AsyncGeocoder.Callback callback;
+    private final Observable<Address> observable = createAddressObservable();
+    private final Context context;
 
-    private Address address;
-    private Exception cause;
+    private final Set<Subscriber<? super Address>> subscribers = Collections.synchronizedSet(new HashSet<Subscriber<?
+            super Address>>());
 
-    private AsyncResolver(AsyncGeocoder.Callback callback, Context context) {
-        this.callback = callback;
+    private final Object resultsLock = new Object();
+    private List<Address> addresses;
+    private Throwable cause;
+
+    AsyncResolver(Context context) {
         this.context = context;
     }
 
-    AsyncResolver(double lat, double lng, AsyncGeocoder.Callback callback, Context context) {
-        this(callback, context);
-        this.lat = lat;
-        this.lng = lng;
+    private Observable<Address> createAddressObservable() {
+        return Observable.create(new Observable.OnSubscribe<Address>() {
+            @Override
+            public void call(Subscriber<? super Address> subscriber) {
+                boolean hasResult;
+                synchronized (resultsLock) {
+                    hasResult = addresses != null || cause != null;
+                    if (!hasResult) {
+                        subscribers.add(subscriber);
+                    }
+                }
+
+                if (hasResult && addresses != null) {
+                    handleAndComplete(addresses, subscriber);
+                } else if (hasResult && cause != null) {
+                    handleAndComplete(cause, subscriber);
+                }
+            }
+        });
     }
 
-    AsyncResolver(String locationName, AsyncGeocoder.Callback callback, Context context) {
-        this(callback, context);
-        this.locationName = locationName;
+    Observable<Address> getObservable() {
+        return observable;
     }
 
     @Override
     protected Void doInBackground(Void... params) {
+        synchronized (resultsLock) {
+            if (addresses != null || cause != null) {
+                return null;
+            }
+        }
         try {
             Geocoder geocoder = new Geocoder(context);
 
             List<Address> addresses;
             if (locationName != null) {
-                addresses = geocoder.getFromLocationName(locationName, 1);
+                addresses = geocoder.getFromLocationName(locationName, resultsCount);
             } else {
-                addresses = geocoder.getFromLocation(lat, lng, 1);
+                addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), resultsCount);
             }
 
-            if (!addresses.isEmpty()) {
-                address = addresses.get(0);
+            synchronized (resultsLock) {
+                this.addresses = Collections.synchronizedList(addresses);
             }
+
+            for (Subscriber<? super Address> subscriber : subscribers) {
+                handleAndComplete(addresses, subscriber);
+            }
+            subscribers.clear();
         } catch (IllegalArgumentException | IOException cause) {
-            this.cause = cause;
+            setError(cause);
         }
         return null;
     }
 
-    @Override
-    protected void onPostExecute(Void result) {
-        if (cause != null) {
-            callback.onFailure(cause);
-        } else {
-            callback.onSuccess(address);
+    public void setLocation(String location) {
+        this.locationName = location;
+        this.location = null;
+    }
+
+    public void setLocation(Location location) {
+        this.location = location;
+        this.locationName = null;
+    }
+
+    void setError(Throwable throwable) {
+        synchronized (resultsLock) {
+            this.cause = throwable;
+        }
+
+        for (Subscriber<? super Address> subscriber : subscribers) {
+            handleAndComplete(cause, subscriber);
+        }
+
+        subscribers.clear();
+    }
+
+    private void handleAndComplete(List<Address> addresses, Subscriber<? super Address> subscriber) {
+        for (Address address : addresses) {
+            if (!subscriber.isUnsubscribed()) {
+                subscriber.onNext(address);
+                subscriber.onCompleted();
+            }
+        }
+    }
+
+    private void handleAndComplete(Throwable throwable, Subscriber<? super Address> subscriber) {
+        if (!subscriber.isUnsubscribed()) {
+            subscriber.onError(throwable);
+            subscriber.onCompleted();
         }
     }
 }

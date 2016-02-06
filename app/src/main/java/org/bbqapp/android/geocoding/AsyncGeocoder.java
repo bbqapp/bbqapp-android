@@ -28,7 +28,8 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Location;
 
-import java.io.IOException;
+import rx.Observable;
+import rx.functions.Action1;
 
 /**
  * Asynchronous geocoder and reverse geocoder
@@ -53,38 +54,29 @@ public final class AsyncGeocoder {
         return instance;
     }
 
-    public void resolve(double latitude, double longitude, Callback callback) {
-        new AsyncResolver(latitude, longitude, callback, context).execute();
+    public Observable<Address> resolve(Observable<Location> location) {
+        final AsyncResolver solver = new AsyncResolver(context);
+        location.take(1).subscribe(new Action1<Location>() {
+            @Override
+            public void call(Location location) {
+                solver.setLocation(location);
+                solver.execute();
+            }
+        }, new Action1<Throwable>() {
+            @Override
+            public void call(Throwable throwable) {
+                solver.setError(throwable);
+            }
+        });
+
+        return solver.getObservable();
     }
 
-    public void resolve(Location location, Callback callback) {
-        resolve(location.getLatitude(), location.getLongitude(), callback);
+    public Observable<Address> resolve(String location) {
+        final AsyncResolver solver = new AsyncResolver(context);
+        solver.setLocation(location);
+
+        return solver.getObservable();
     }
 
-    public void resolve(String locationName, Callback callback) {
-        new AsyncResolver(locationName, callback, context).execute();
-    }
-
-    /**
-     * Geocoder async callback which will be called in UI Thread
-     */
-    public interface Callback {
-        /**
-         * Successfully resolved
-         *
-         * @param address resolved address
-         */
-        void onSuccess(Address address);
-
-        /**
-         * Unsuccessfully resolved
-         *
-         * @param cause exception occurred during resolving. Possible causes:
-         *              <ul>
-         *              <li>{@link IllegalArgumentException} if passed parameters are illegal</li>
-         *              <li>{@link IOException} if communication error occurred</li>
-         *              </ul>
-         */
-        void onFailure(Exception cause);
-    }
 }

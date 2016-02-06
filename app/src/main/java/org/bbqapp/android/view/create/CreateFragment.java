@@ -34,6 +34,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -64,8 +65,11 @@ import javax.inject.Inject;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import rx.Observable;
 import rx.Subscription;
+import rx.android.schedulers.HandlerScheduler;
 import rx.functions.Action1;
+import rx.functions.Func1;
 
 /**
  * Fragment to create new places
@@ -104,7 +108,6 @@ public class CreateFragment extends BaseFragment {
     Places placesEP;
 
     private Subscription subscriber;
-    private boolean finished = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -122,40 +125,39 @@ public class CreateFragment extends BaseFragment {
 
         getActivity().setTitle(R.string.menu_create);
 
-        subscriber = locationService.getLocation().subscribe(new Action1<Location>() {
+        final Handler handler = new Handler();
+
+        Observable<Location> filteredLocation = locationService.getLocation().filter(new Func1<Location, Boolean>() {
             @Override
-            public void call(Location location) {
-                if (location.getAccuracy() <= 50) {
-                    locationEditText.setText(new Point(location).toString());
-                    asyncGeocoder.resolve(location, new AsyncGeocoder.Callback() {
-                        @Override
-                        public void onSuccess(Address address) {
-                            StringBuilder sb = new StringBuilder();
-                            for (int i = 0; i < address.getMaxAddressLineIndex(); i++) {
-                                sb.append(address.getAddressLine(i));
-                                sb.append("\n");
-                            }
-                            sb.deleteCharAt(sb.length() - 1);
-
-                            addressText.setText(sb.toString());
-                        }
-
-                        @Override
-                        public void onFailure(Exception cause) {
-                            addressText.setText(cause.getLocalizedMessage());
-                        }
-                    });
-
-                    if (subscriber != null) {
-                        subscriber.unsubscribe();
-                    }
-                }
+            public Boolean call(Location location) {
+                return location.getAccuracy() <= 20 && (System.currentTimeMillis() - location.getTime()) <= 60_000;
             }
         });
+        filteredLocation.take(1).observeOn(HandlerScheduler.from(handler)).subscribe(new Action1<Location>() {
+            @Override
+            public void call(Location location) {
+                locationEditText.setText(String.format("%s, %s", location.getLatitude(), location.getLongitude()));
+            }
+        });
+        subscriber = asyncGeocoder.resolve(filteredLocation).take(1).observeOn(HandlerScheduler.from(handler))
+                .subscribe(new Action1<Address>() {
+            @Override
+            public void call(Address address) {
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < address.getMaxAddressLineIndex(); i++) {
+                    sb.append(address.getAddressLine(i));
+                    sb.append("\n");
+                }
+                sb.deleteCharAt(sb.length() - 1);
 
-        if (finished) {
-            subscriber.unsubscribe();
-        }
+                addressText.setText(sb.toString());
+            }
+        }, new Action1<Throwable>() {
+            @Override
+            public void call(Throwable throwable) {
+                addressText.setText(throwable.getLocalizedMessage());
+            }
+        });
     }
 
     @Override
@@ -219,7 +221,7 @@ public class CreateFragment extends BaseFragment {
         File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
 
         try {
-            image = dir.createTempFile("takePicture_", ".jpg", dir);
+            image = File.createTempFile("takePicture_", ".jpg", dir);
 
             Log.i(TAG, "take picture to: " + Uri.fromFile(image));
 
