@@ -32,6 +32,8 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 import de.halfbit.tinybus.TinyBus;
+import rx.Scheduler;
+import rx.android.schedulers.AndroidSchedulers;
 
 /**
  * Application module to hold global states
@@ -60,5 +62,10 @@ public class AppModule {
     @Singleton
     TinyBus provideTinyBus(Context context) {
         return new TinyBus(context);
+    }
+
+    @Provides
+    Scheduler provideScheduler() {
+        return AndroidSchedulers.mainThread();
     }
 }

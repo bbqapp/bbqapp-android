@@ -89,10 +89,8 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
 
     @Inject
     Places placesEP;
-
     @Inject
     LocationService locationService;
-
     @Inject
     PlaceClusterManager placeClusterManager;
 

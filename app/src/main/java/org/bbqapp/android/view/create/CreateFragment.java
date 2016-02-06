@@ -34,7 +34,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -66,8 +65,8 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import rx.Observable;
+import rx.Scheduler;
 import rx.Subscription;
-import rx.android.schedulers.HandlerScheduler;
 import rx.functions.Action1;
 import rx.functions.Func1;
 
@@ -107,6 +106,9 @@ public class CreateFragment extends BaseFragment {
     @Inject
     Places placesEP;
 
+    @Inject
+    Scheduler scheduler;
+
     private Subscription subscriber;
 
     @Override
@@ -125,22 +127,19 @@ public class CreateFragment extends BaseFragment {
 
         getActivity().setTitle(R.string.menu_create);
 
-        final Handler handler = new Handler();
-
         Observable<Location> filteredLocation = locationService.getLocation().filter(new Func1<Location, Boolean>() {
             @Override
             public Boolean call(Location location) {
                 return location.getAccuracy() <= 20 && (System.currentTimeMillis() - location.getTime()) <= 60_000;
             }
         });
-        filteredLocation.take(1).observeOn(HandlerScheduler.from(handler)).subscribe(new Action1<Location>() {
+        filteredLocation.take(1).observeOn(scheduler).subscribe(new Action1<Location>() {
             @Override
             public void call(Location location) {
                 locationEditText.setText(String.format("%s, %s", location.getLatitude(), location.getLongitude()));
             }
         });
-        subscriber = asyncGeocoder.resolve(filteredLocation).take(1).observeOn(HandlerScheduler.from(handler))
-                .subscribe(new Action1<Address>() {
+        subscriber = asyncGeocoder.resolve(filteredLocation).take(1).observeOn(scheduler).subscribe(new Action1<Address>() {
             @Override
             public void call(Address address) {
                 StringBuilder sb = new StringBuilder();
