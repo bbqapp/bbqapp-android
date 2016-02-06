@@ -33,10 +33,8 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import org.bbqapp.android.R;
-import org.bbqapp.android.api.Callback;
-import org.bbqapp.android.api.exception.ApiException;
 import org.bbqapp.android.api.model.Place;
-import org.bbqapp.android.api.service.Places;
+import org.bbqapp.android.api.service.PlaceService;
 import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.view.BaseFragment;
 
@@ -44,8 +42,11 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import rx.Scheduler;
+import rx.Subscriber;
 import rx.Subscription;
 import rx.functions.Action1;
+import rx.schedulers.Schedulers;
 
 /**
  * Fragment to display places in a clickable list
@@ -65,7 +66,9 @@ public class ListFragment extends BaseFragment {
     LocationService locationService;
 
     @Inject
-    Places placesEP;
+    PlaceService placeService;
+    @Inject
+    Scheduler scheduler;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -102,18 +105,28 @@ public class ListFragment extends BaseFragment {
         placeAdapter.setLocation(location);
 
         if (placeAdapter.getList() == null) {
-            placesEP.getPlaces(location.getLatitude() + "," + location.getLongitude(), 10000, new Callback<List<Place>>
-                    () {
-                @Override
-                public void onSuccess(List<Place> places) {
-                    placeAdapter.setPlaces(places);
-                }
+            placeService.getPlaces(location, 10000)
+                    .subscribeOn(Schedulers.io())
+                    .take(1)
+                    .observeOn(scheduler)
+                    .unsubscribeOn(Schedulers.io())
+                    .subscribe(new Subscriber<List<Place>>() {
+                        @Override
+                        public void onCompleted() {
+                        }
 
-                @Override
-                public void onFailure(ApiException cause) {
-                    Toast.makeText(getActivity(), "Could not retrieve places: " + cause.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-                }
-            });
+                        @Override
+                        public void onError(Throwable e) {
+                            Toast.makeText(getActivity(),
+                                    "Could not retrieve places: " + e.getMessage(),
+                                    Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onNext(List<Place> places) {
+                            placeAdapter.setPlaces(places);
+                        }
+                    });
         }
     }
 

@@ -27,11 +27,18 @@ package org.bbqapp.android;
 import android.content.Context;
 import android.location.LocationManager;
 
+import org.bbqapp.android.api.converter.LatLngConverterFactory;
+import org.bbqapp.android.api.converter.LocationConverterFactory;
+import org.bbqapp.android.api.service.PlaceService;
+
 import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
 import de.halfbit.tinybus.TinyBus;
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
 import rx.Scheduler;
 import rx.android.schedulers.AndroidSchedulers;
 
@@ -62,6 +69,24 @@ public class AppModule {
     @Singleton
     TinyBus provideTinyBus(Context context) {
         return new TinyBus(context);
+    }
+
+    @Provides
+    @Singleton
+    Retrofit provideRetrofit() {
+        return new Retrofit.Builder()
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .addConverterFactory(LocationConverterFactory.create())
+                .addConverterFactory(LatLngConverterFactory.create())
+                .baseUrl("http://bbqapp.org")
+                .build();
+    }
+
+    @Provides
+    @Singleton
+    PlaceService providePlaces2(Retrofit retrofit) {
+        return retrofit.create(PlaceService.class);
     }
 
     @Provides
