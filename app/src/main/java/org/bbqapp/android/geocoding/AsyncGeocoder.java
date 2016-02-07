@@ -65,18 +65,18 @@ public final class AsyncGeocoder {
         }, new Action1<Throwable>() {
             @Override
             public void call(Throwable throwable) {
-                solver.setError(throwable);
+                solver.getSubject().onError(throwable);
             }
         });
 
-        return solver.getObservable();
+        return solver.getSubject();
     }
 
     public Observable<Address> resolve(String location) {
         final AsyncResolver solver = new AsyncResolver(context);
         solver.setLocation(location);
 
-        return solver.getObservable();
+        return solver.getSubject();
     }
 
 }

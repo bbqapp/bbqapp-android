@@ -116,7 +116,7 @@ public class Point extends Location {
             throw new IllegalArgumentException("Only list with two elements is allowed");
         }
 
-        super.setCoordinates(new ArrayList<Double>(coordinates));
+        super.setCoordinates(new ArrayList<>(coordinates));
     }
 
     /**

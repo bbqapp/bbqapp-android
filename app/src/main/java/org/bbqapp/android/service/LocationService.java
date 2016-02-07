@@ -30,74 +30,43 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 import rx.Observable;
-import rx.Subscriber;
+import rx.functions.Action0;
+import rx.subjects.ReplaySubject;
 import timber.log.Timber;
 
 /**
  * Location service to retrieve geo coordinates of current device location
  */
 public final class LocationService implements LocationListener {
-    private static LocationService instance;
 
     private LocationManager locationManager;
 
-    private boolean requestedUpdates = false;
-
     private Location lastLocation;
 
-    private Set<Subscriber<? super Location>> subscribers =
-            Collections.synchronizedSet(new HashSet<Subscriber<? super Location>>());
-    private Observable<Location> observable = Observable.create(new Observable.OnSubscribe<Location>() {
+    private ReplaySubject<Location> subject = ReplaySubject.createWithSize(1);
+    private Observable<Location> observable = subject.doOnSubscribe(new Action0() {
         @Override
-        public void call(Subscriber<? super Location> subscriber) {
-            onSubscription(subscriber);
+        public void call() {
+            LocationService.this.onSubscriptionOrOnUnsubscription(true);
+        }
+    }).doOnUnsubscribe(new Action0() {
+        @Override
+        public void call() {
+            LocationService.this.onSubscriptionOrOnUnsubscription(false);
         }
     });
 
-    private LocationService(LocationManager locationManager) {
+    private boolean subscribed = false;
+    private long subscribers = 0;
+
+    public LocationService(LocationManager locationManager) {
+
         this.locationManager = locationManager;
-    }
-
-    private void onSubscription(Subscriber<? super Location> subscriber) {
-        try {
-            Location location = getBestLastLocation();
-            subscribers.add(subscriber);
-
-            if (location != null) {
-                subscriber.onNext(location);
-            }
-
-            enableOrDisable();
-        } catch (SecurityException e) {
-            subscriber.onError(e);
-        }
     }
 
     public Observable<Location> getLocation() {
         return observable;
-    }
-
-    /**
-     * Returns {@link LocationService}
-     *
-     * @param locationManager location manager
-     * @return instance of {@link LocationService}
-     */
-    public static LocationService getService(LocationManager locationManager) {
-        if (instance == null) {
-            synchronized (LocationService.class) {
-                if (instance == null) {
-                    instance = new LocationService(locationManager);
-                }
-            }
-        }
-
-        return instance;
     }
 
     protected Location getBestLastLocation() {
@@ -131,16 +100,7 @@ public final class LocationService implements LocationListener {
     public void onLocationChanged(Location location) {
         lastLocation = location;
 
-        try {
-            enableOrDisable();
-            for (Subscriber<? super Location> subscriber : subscribers) {
-                subscriber.onNext(location);
-            }
-        } catch (SecurityException e) {
-            for (Subscriber<? super Location> subscriber : subscribers) {
-                subscriber.onError(e);
-            }
-        }
+        subject.onNext(location);
     }
 
     @Override
@@ -164,31 +124,37 @@ public final class LocationService implements LocationListener {
         return criteria;
     }
 
-    protected void enableOrDisable() throws SecurityException {
-        boolean enabled = clearSubscribers();
-
-        if (enabled && !requestedUpdates) {
+    private synchronized void subscribe() {
+        try {
             locationManager.requestLocationUpdates(0, 0, getProviderCriteria(), this, null);
-        } else if (!enabled && requestedUpdates) {
-            locationManager.removeUpdates(this);
+            subscribed = true;
+
+
+            if (subject.getValue() == null) {
+                subject.onNext(getBestLastLocation());
+            }
+        } catch (SecurityException e) {
+            subject.onError(e);
         }
-        requestedUpdates = enabled;
     }
 
-    private boolean clearSubscribers() {
-        boolean enabled = false;
-
-        Set<Subscriber<? super Location>> unsubscribedSubscribers = new HashSet<>();
-        for (Subscriber<? super Location> subscriber : subscribers) {
-            boolean unsubscribed = subscriber.isUnsubscribed();
-            if (unsubscribed) {
-                unsubscribedSubscribers.add(subscriber);
-            }
-
-            enabled = enabled || !unsubscribed;
+    private synchronized void unsubscribe() {
+        try {
+            locationManager.removeUpdates(this);
+            subscribed = false;
+        } catch (SecurityException e) {
+            subject.onError(e);
         }
-        subscribers.removeAll(unsubscribedSubscribers);
+    }
 
-        return enabled;
+    private synchronized void onSubscriptionOrOnUnsubscription(boolean onSubscription) {
+        subscribers = subscribers + (onSubscription ? 1 : -1);
+
+        boolean hasObservers = subscribers > 0;
+        if (hasObservers && !subscribed) {
+            subscribe();
+        } else if (!hasObservers && subscribed) {
+            unsubscribe();
+        }
     }
 }

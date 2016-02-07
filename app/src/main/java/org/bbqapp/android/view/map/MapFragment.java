@@ -201,7 +201,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
         Location.distanceBetween(bounds.northeast.latitude, bounds.northeast.longitude, bounds.southwest
                 .latitude, bounds.southwest.longitude, results);
 
-        return Math.round(results[0] / 1_000);
+        return Math.max((long) Math.ceil(results[0] / 1_000d), 1L);
 
     }
 

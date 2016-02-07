@@ -80,7 +80,7 @@ public class ActivityModule {
     @Provides
     @Singleton
     LocationService provideLocationService(LocationManager locationManager) {
-        return LocationService.getService(locationManager);
+        return new LocationService(locationManager);
     }
 
     @Provides

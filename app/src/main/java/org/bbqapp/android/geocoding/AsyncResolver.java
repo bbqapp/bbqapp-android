@@ -31,69 +31,32 @@ import android.location.Location;
 import android.os.AsyncTask;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import rx.Observable;
-import rx.Subscriber;
+import rx.subjects.ReplaySubject;
 
 /**
  * Async geocoder task which is used by {@link AsyncGeocoder}
  */
 class AsyncResolver extends AsyncTask<Void, Void, Void> {
+    private final Context context;
 
     private String locationName;
     private Location location;
     private final int resultsCount = 1;
 
-    private final Observable<Address> observable = createAddressObservable();
-    private final Context context;
-
-    private final Set<Subscriber<? super Address>> subscribers = Collections.synchronizedSet(new HashSet<Subscriber<?
-            super Address>>());
-
-    private final Object resultsLock = new Object();
-    private List<Address> addresses;
-    private Throwable cause;
+    private ReplaySubject<Address> subject = ReplaySubject.createWithSize(resultsCount);
 
     AsyncResolver(Context context) {
         this.context = context;
     }
 
-    private Observable<Address> createAddressObservable() {
-        return Observable.create(new Observable.OnSubscribe<Address>() {
-            @Override
-            public void call(Subscriber<? super Address> subscriber) {
-                boolean hasResult;
-                synchronized (resultsLock) {
-                    hasResult = addresses != null || cause != null;
-                    if (!hasResult) {
-                        subscribers.add(subscriber);
-                    }
-                }
-
-                if (hasResult && addresses != null) {
-                    handleAndComplete(addresses, subscriber);
-                } else if (hasResult && cause != null) {
-                    handleAndComplete(cause, subscriber);
-                }
-            }
-        });
-    }
-
-    Observable<Address> getObservable() {
-        return observable;
+    ReplaySubject<Address> getSubject() {
+        return subject;
     }
 
     @Override
     protected Void doInBackground(Void... params) {
-        synchronized (resultsLock) {
-            if (addresses != null || cause != null) {
-                return null;
-            }
-        }
         try {
             Geocoder geocoder = new Geocoder(context);
 
@@ -104,16 +67,11 @@ class AsyncResolver extends AsyncTask<Void, Void, Void> {
                 addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), resultsCount);
             }
 
-            synchronized (resultsLock) {
-                this.addresses = Collections.synchronizedList(addresses);
+            for(Address address : addresses) {
+                subject.onNext(address);
             }
-
-            for (Subscriber<? super Address> subscriber : subscribers) {
-                handleAndComplete(addresses, subscriber);
-            }
-            subscribers.clear();
         } catch (IllegalArgumentException | IOException cause) {
-            setError(cause);
+            subject.onError(cause);
         }
         return null;
     }
@@ -126,33 +84,5 @@ class AsyncResolver extends AsyncTask<Void, Void, Void> {
     public void setLocation(Location location) {
         this.location = location;
         this.locationName = null;
-    }
-
-    void setError(Throwable throwable) {
-        synchronized (resultsLock) {
-            this.cause = throwable;
-        }
-
-        for (Subscriber<? super Address> subscriber : subscribers) {
-            handleAndComplete(cause, subscriber);
-        }
-
-        subscribers.clear();
-    }
-
-    private void handleAndComplete(List<Address> addresses, Subscriber<? super Address> subscriber) {
-        for (Address address : addresses) {
-            if (!subscriber.isUnsubscribed()) {
-                subscriber.onNext(address);
-                subscriber.onCompleted();
-            }
-        }
-    }
-
-    private void handleAndComplete(Throwable throwable, Subscriber<? super Address> subscriber) {
-        if (!subscriber.isUnsubscribed()) {
-            subscriber.onError(throwable);
-            subscriber.onCompleted();
-        }
     }
 }
