@@ -32,7 +32,7 @@ import android.view.LayoutInflater;
 import org.bbqapp.android.AppModule;
 import org.bbqapp.android.auth.Facebook;
 import org.bbqapp.android.auth.GooglePlus;
-import org.bbqapp.android.geocoding.AsyncGeocoder;
+import org.bbqapp.android.service.GeocodeService;
 import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.view.create.CreateFragment;
 import org.bbqapp.android.view.list.ListFragment;
@@ -85,8 +85,8 @@ public class ActivityModule {
 
     @Provides
     @Singleton
-    AsyncGeocoder provideAsyncGeocoder(Activity context) {
-        return AsyncGeocoder.getInstance(context);
+    GeocodeService provideAsyncGeocoder(Activity context) {
+        return new GeocodeService(context);
     }
 
     @Provides

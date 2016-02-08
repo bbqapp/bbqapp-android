@@ -51,7 +51,7 @@ import org.bbqapp.android.api.model.Picture;
 import org.bbqapp.android.api.model.Place;
 import org.bbqapp.android.api.model.Point;
 import org.bbqapp.android.api.service.PlaceService;
-import org.bbqapp.android.geocoding.AsyncGeocoder;
+import org.bbqapp.android.service.GeocodeService;
 import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.view.BaseFragment;
 
@@ -101,7 +101,7 @@ public class CreateFragment extends BaseFragment {
     private File image = null;
 
     @Inject
-    AsyncGeocoder asyncGeocoder;
+    GeocodeService geocodeService;
 
     @Inject
     LocationService locationService;
@@ -145,24 +145,30 @@ public class CreateFragment extends BaseFragment {
                 locationEditText.setText(String.format("%s, %s", location.getLatitude(), location.getLongitude()));
             }
         });
-        subscriber = asyncGeocoder.resolve(filteredLocation).take(1).observeOn(mainScheduler).subscribe(new Action1<Address>() {
-            @Override
-            public void call(Address address) {
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < address.getMaxAddressLineIndex(); i++) {
-                    sb.append(address.getAddressLine(i));
-                    sb.append("\n");
-                }
-                sb.deleteCharAt(sb.length() - 1);
+        subscriber = geocodeService
+                .resolve(filteredLocation)
+                .subscribeOn(ioScheduler)
+                .unsubscribeOn(ioScheduler)
+                .take(1)
+                .observeOn(mainScheduler)
+                .subscribe(new Action1<Address>() {
+                    @Override
+                    public void call(Address address) {
+                        StringBuilder sb = new StringBuilder();
+                        for (int i = 0; i < address.getMaxAddressLineIndex(); i++) {
+                            sb.append(address.getAddressLine(i));
+                            sb.append("\n");
+                        }
+                        sb.deleteCharAt(sb.length() - 1);
 
-                addressText.setText(sb.toString());
-            }
-        }, new Action1<Throwable>() {
-            @Override
-            public void call(Throwable throwable) {
-                addressText.setText(throwable.getLocalizedMessage());
-            }
-        });
+                        addressText.setText(sb.toString());
+                    }
+                }, new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable throwable) {
+                        addressText.setText(throwable.getLocalizedMessage());
+                    }
+                });
     }
 
     @Override
@@ -290,7 +296,7 @@ public class CreateFragment extends BaseFragment {
     }
 
     private void uploadImage(final Id id) {
-        Picture picture = null;
+        Picture picture;
         try {
             picture = new Picture(image) {
                 @Override
@@ -313,6 +319,7 @@ public class CreateFragment extends BaseFragment {
                     @Override
                     public void onCompleted() {
                     }
+
                     @Override
                     public void onError(Throwable e) {
                         showMessage("Could not upload place picture");
