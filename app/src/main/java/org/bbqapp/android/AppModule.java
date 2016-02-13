@@ -29,11 +29,14 @@ import android.location.LocationManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.jakewharton.picasso.OkHttp3Downloader;
+import com.squareup.picasso.Picasso;
 
-import org.bbqapp.android.api.converter.PictureConverterFactory;
+import org.bbqapp.android.api.PicassoPictureRequestTransformer;
+import org.bbqapp.android.api.converter.IdConverterFactory;
 import org.bbqapp.android.api.converter.LatLngConverterFactory;
 import org.bbqapp.android.api.converter.LocationConverterFactory;
-import org.bbqapp.android.api.converter.IdConverterFactory;
+import org.bbqapp.android.api.converter.PictureConverterFactory;
 import org.bbqapp.android.api.service.PlaceService;
 
 import javax.inject.Named;
@@ -42,6 +45,7 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 import de.halfbit.tinybus.TinyBus;
+import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -80,21 +84,38 @@ public class AppModule {
 
     @Provides
     @Singleton
+    OkHttpClient provideOkHttpClient() {
+        return new OkHttpClient.Builder()
+                .build();
+    }
+
+    @Provides
+    @Singleton
+    Picasso providePicasso(Context context, OkHttpClient client) {
+        return new Picasso.Builder(context)
+                .downloader(new OkHttp3Downloader(client))
+                .requestTransformer(new PicassoPictureRequestTransformer(BuildConfig.API_URL))
+                .build();
+    }
+
+    @Provides
+    @Singleton
     Gson provideGson() {
         return new GsonBuilder().create();
     }
 
     @Provides
     @Singleton
-    Retrofit provideRetrofit(Gson gson) {
+    Retrofit provideRetrofit(OkHttpClient client, Gson gson) {
         return new Retrofit.Builder()
+                .client(client)
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .addConverterFactory(PictureConverterFactory.create())
                 .addConverterFactory(IdConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .addConverterFactory(LocationConverterFactory.create())
                 .addConverterFactory(LatLngConverterFactory.create())
-                .baseUrl("http://bbqapp.org")
+                .baseUrl(BuildConfig.API_HOST)
                 .build();
     }
 

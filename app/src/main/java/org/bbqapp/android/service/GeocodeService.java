@@ -51,7 +51,7 @@ public final class GeocodeService {
     public Observable<Address> resolve(Observable<Location> location) {
         final ReplaySubject<Address> subject = ReplaySubject.createWithSize(RESULTS_SIZE);
 
-        location.take(1).subscribe(new Subscriber<Location>() {
+        location.subscribe(new Subscriber<Location>() {
             @Override
             public void onCompleted() {
                 subject.onCompleted();
@@ -64,17 +64,16 @@ public final class GeocodeService {
 
             @Override
             public void onNext(Location location) {
+                unsubscribe();
                 resolve(location).subscribe(new Subscriber<Address>() {
                     @Override
                     public void onCompleted() {
                         subject.onCompleted();
-                        unsubscribe();
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         subject.onError(e);
-                        unsubscribe();
                     }
 
                     @Override
@@ -95,6 +94,7 @@ public final class GeocodeService {
             for (Address address : geocode(location)) {
                 subject.onNext(address);
             }
+            subject.onCompleted();
         } catch (IOException e) {
             subject.onError(e);
         }
@@ -109,6 +109,7 @@ public final class GeocodeService {
             for (Address address : geocode(location)) {
                 subject.onNext(address);
             }
+            subject.onCompleted();
         } catch (IOException e) {
             subject.onError(e);
         }

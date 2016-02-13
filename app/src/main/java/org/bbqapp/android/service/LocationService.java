@@ -29,6 +29,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Looper;
 
 import rx.Observable;
 import rx.functions.Action0;
@@ -126,7 +127,7 @@ public final class LocationService implements LocationListener {
 
     private synchronized void subscribe() {
         try {
-            locationManager.requestLocationUpdates(0, 0, getProviderCriteria(), this, null);
+            locationManager.requestLocationUpdates(0, 0, getProviderCriteria(), this, Looper.getMainLooper());
             subscribed = true;
 
 

@@ -133,23 +133,31 @@ public class CreateFragment extends BaseFragment {
 
         getActivity().setTitle(R.string.menu_create);
 
-        Observable<Location> filteredLocation = locationService.getLocation().filter(new Func1<Location, Boolean>() {
-            @Override
-            public Boolean call(Location location) {
-                return location.getAccuracy() <= 20 && (System.currentTimeMillis() - location.getTime()) <= 60_000;
-            }
-        });
-        filteredLocation.take(1).observeOn(mainScheduler).subscribe(new Action1<Location>() {
-            @Override
-            public void call(Location location) {
-                locationEditText.setText(String.format("%s, %s", location.getLatitude(), location.getLongitude()));
-            }
-        });
-        subscriber = geocodeService
-                .resolve(filteredLocation)
+        locationService.getLocation()
+                .filter(new Func1<Location, Boolean>() {
+                    @Override
+                    public Boolean call(Location location) {
+                        return location.getAccuracy() <= 20 && (System.currentTimeMillis() - location.getTime()) <= 60_000;
+                    }
+                })
+                .take(1)
+                .observeOn(mainScheduler)
+                .doOnNext(new Action1<Location>() {
+                    @Override
+                    public void call(Location location) {
+                        locationEditText.setText(String.format("%s, %s", location.getLatitude(), location.getLongitude()));
+
+                    }
+                })
+                .observeOn(ioScheduler)
+                .flatMap(new Func1<Location, Observable<Address>>() {
+                    @Override
+                    public Observable<Address> call(final Location location) {
+                        return geocodeService.resolve(location);
+                    }
+                })
                 .subscribeOn(ioScheduler)
                 .unsubscribeOn(ioScheduler)
-                .take(1)
                 .observeOn(mainScheduler)
                 .subscribe(new Action1<Address>() {
                     @Override
@@ -166,7 +174,7 @@ public class CreateFragment extends BaseFragment {
                 }, new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
-                        addressText.setText(throwable.getLocalizedMessage());
+                        Timber.e(throwable, "Could not resolve address");
                     }
                 });
     }

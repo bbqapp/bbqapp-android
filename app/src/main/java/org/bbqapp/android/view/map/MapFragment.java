@@ -24,9 +24,6 @@
 
 package org.bbqapp.android.view.map;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
@@ -46,16 +43,15 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+import com.squareup.picasso.Picasso;
 
 import org.bbqapp.android.R;
-import org.bbqapp.android.api.model.Picture;
 import org.bbqapp.android.api.model.PictureInfo;
 import org.bbqapp.android.api.model.Place;
 import org.bbqapp.android.api.service.PlaceService;
 import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.view.BaseFragment;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
@@ -64,13 +60,10 @@ import javax.inject.Named;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import rx.Observable;
 import rx.Scheduler;
 import rx.Subscriber;
 import rx.Subscription;
-import rx.exceptions.Exceptions;
 import rx.functions.Action1;
-import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 import timber.log.Timber;
 
@@ -102,6 +95,8 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
     Scheduler ioScheduler;
     @Inject
     LocationService locationService;
+    @Inject
+    Picasso picasso;
     @Inject
     PlaceClusterManager placeClusterManager;
 
@@ -212,7 +207,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
         displayPlaces(target, radius);
     }
 
-    private void displayPlaces(LatLng target, long radius) {
+    private void displayPlaces(final LatLng target, final long radius) {
         Log.i(TAG, "Request places at " + target + " with radius " + radius);
 
         getProgressbar().setIndeterminate(true);
@@ -228,6 +223,7 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
 
                     @Override
                     public void onError(Throwable e) {
+                        Timber.e(e, "Could not retrieve places for %s with radius %d", target.toString(), radius);
                         Toast.makeText(getActivity(), e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
                     }
 
@@ -244,56 +240,30 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
         placeService.getPicturesInfo(place)
                 .subscribeOn(ioScheduler)
                 .unsubscribeOn(ioScheduler)
-                .flatMap(new Func1<List<PictureInfo>, Observable<Picture>>() {
-                    @Override
-                    public Observable<Picture> call(List<PictureInfo> picturesInfo) {
-                        if (!picturesInfo.isEmpty()) {
-                            int index = new Random().nextInt(picturesInfo.size());
-                            PictureInfo pictureInfo = picturesInfo.get(index);
-
-                            return placeService.getPicture(pictureInfo.getPlaceId(), pictureInfo.getId());
-                        }
-
-                        return Observable.just(null);
-                    }
-                })
-                .map(new Func1<Picture, Bitmap>() {
-                    @Override
-                    public Bitmap call(Picture picture) {
-                        if (picture == null) {
-                            return null;
-                        }
-                        try {
-                            Bitmap bitmap = BitmapFactory.decodeStream(picture.in());
-                            int nh = (int) (bitmap.getHeight() * (512.0 / bitmap.getWidth()));
-                            return Bitmap.createScaledBitmap(bitmap, 512, nh, true);
-                        } catch (IOException e) {
-                            Exceptions.propagate(e);
-                            return null; // will never be reached
-                        }
-                    }
-                })
                 .observeOn(mainScheduler)
-                .subscribe(new Subscriber<Bitmap>() {
+                .subscribe(new Subscriber<List<PictureInfo>>() {
                     @Override
                     public void onCompleted() {
+
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        Timber.e(e, "Could not download picture");
+                        Timber.e(e, "Could not retrieve pictures information");
                     }
 
                     @Override
-                    public void onNext(Bitmap bitmap) {
-                        if (bitmap != null) {
-                            imageView.setImageDrawable(new BitmapDrawable(getActivity().getResources(), bitmap));
-                        } else {
-                            imageView.setImageBitmap(null);
+                    public void onNext(List<PictureInfo> picturesInfo) {
+                        if (!picturesInfo.isEmpty()) {
+                            int index = new Random().nextInt(picturesInfo.size());
+                            PictureInfo pictureInfo = picturesInfo.get(index);
+
+                            picasso.load(pictureInfo.getMeta().getUrl())
+                                    .resize(512, 512)
+                                    .into(imageView);
                         }
                     }
                 });
-
     }
 
     @Override
