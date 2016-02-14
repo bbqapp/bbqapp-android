@@ -39,7 +39,8 @@ public class PicassoPictureRequestTransformer implements Picasso.RequestTransfor
     @Override
     public Request transformRequest(Request request) {
         String host = request.uri.getHost();
-        if (host == null || host.isEmpty()) {
+        String scheme = request.uri.getScheme();
+        if ((scheme == null || scheme.isEmpty()) && (host == null || host.isEmpty())) {
             String originalUri = request.uri.toString();
             if (originalUri != null) {
                 if (originalUri.startsWith("/") && apiUrl.endsWith("/")) {

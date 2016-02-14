@@ -26,8 +26,6 @@ package org.bbqapp.android.view.create;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.location.Location;
 import android.net.Uri;
@@ -44,6 +42,8 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.squareup.picasso.Picasso;
 
 import org.bbqapp.android.R;
 import org.bbqapp.android.api.model.Id;
@@ -109,6 +109,8 @@ public class CreateFragment extends BaseFragment {
     @Inject
     PlaceService placeService;
     @Inject
+    Picasso picasso;
+    @Inject
     @Named("main")
     Scheduler mainScheduler;
     @Inject
@@ -133,7 +135,7 @@ public class CreateFragment extends BaseFragment {
 
         getActivity().setTitle(R.string.menu_create);
 
-        locationService.getLocation()
+        subscriber = locationService.getLocation()
                 .filter(new Func1<Location, Boolean>() {
                     @Override
                     public Boolean call(Location location) {
@@ -257,11 +259,8 @@ public class CreateFragment extends BaseFragment {
         if (resultCode == Activity.RESULT_OK && image != null) {
 
             Uri imageUri = Uri.fromFile(image);
+            picasso.load(imageUri).resize(512, 512).into(imageView);
 
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inSampleSize = 5;// > 1
-            Bitmap imageBitmap = BitmapFactory.decodeFile(image.getAbsolutePath(), options);
-            imageView.setImageBitmap(imageBitmap);
             Log.i(TAG, "onTakePictureResponse, image saved to: " + imageUri);
         }
     }
