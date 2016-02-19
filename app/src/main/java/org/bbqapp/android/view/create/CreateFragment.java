@@ -182,12 +182,17 @@ public class CreateFragment extends BaseFragment {
     }
 
     @Override
+    public void onPause() {
+        super.onPause();
+
+        subscriber.unsubscribe();
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
         ButterKnife.unbind(this);
         view = null;
-
-        subscriber.unsubscribe();
     }
 
     @Override

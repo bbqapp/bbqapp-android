@@ -121,7 +121,7 @@ public class AppModule {
 
     @Provides
     @Singleton
-    PlaceService providePlaces2(Retrofit retrofit) {
+    PlaceService providePlacesService(Retrofit retrofit) {
         return retrofit.create(PlaceService.class);
     }
 

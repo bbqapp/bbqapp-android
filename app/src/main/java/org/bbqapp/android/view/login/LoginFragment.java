@@ -52,13 +52,15 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import de.halfbit.tinybus.Subscribe;
+import de.halfbit.tinybus.TinyBus;
 
 /**
  * Fragment for user login operations
  */
 public class LoginFragment extends BaseFragment implements View.OnClickListener {
 
-    private static final String TAG = LoginFragment.class.getName();
+    @Inject
+    TinyBus bus;
 
     @Inject
     LoginManager loginManager;
@@ -96,6 +98,8 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
         super.onResume();
         getActivity().setTitle(R.string.menu_login);
 
+        bus.register(this);
+
         loginButtons.setVisibility(View.GONE);
         loginInfo.setVisibility(View.GONE);
 
@@ -105,6 +109,8 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
     @Override
     public void onPause() {
         super.onPause();
+
+        bus.unregister(this);
 
         loginButtons.removeAllViews();
     }

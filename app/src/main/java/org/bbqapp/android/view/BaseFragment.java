@@ -31,17 +31,10 @@ import android.widget.ProgressBar;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
-
-import de.halfbit.tinybus.TinyBus;
-
 /**
  * Base fragment for all fragments in application
  */
 public abstract class BaseFragment extends Fragment {
-
-    @Inject
-    TinyBus bus;
 
     private boolean injected = false;
 
@@ -58,13 +51,11 @@ public abstract class BaseFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        bus.register(this);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        bus.unregister(this);
     }
 
     public ProgressBar getProgressbar() {
