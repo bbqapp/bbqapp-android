@@ -30,6 +30,8 @@ import android.location.LocationManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.jakewharton.picasso.OkHttp3Downloader;
+import com.squareup.leakcanary.LeakCanary;
+import com.squareup.leakcanary.RefWatcher;
 import com.squareup.picasso.Picasso;
 
 import org.bbqapp.android.api.PicassoPictureRequestTransformer;
@@ -74,6 +76,16 @@ public class AppModule {
     @Singleton
     LocationManager provideLocationManager(Context context) {
         return (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+    }
+
+    @Provides
+    @Singleton
+    RefWatcher provideRefWatcher() {
+        if (BuildConfig.DEBUG) {
+            return RefWatcher.DISABLED;
+        } else {
+            return LeakCanary.install(app);
+        }
     }
 
     @Provides

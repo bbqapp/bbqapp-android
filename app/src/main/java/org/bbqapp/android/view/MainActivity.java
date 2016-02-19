@@ -29,6 +29,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
@@ -158,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             loginManager.login();
-        } catch(Exception e) {
+        } catch (Exception e) {
             Log.e(TAG, "error occurred during login process", e);
         }
     }
@@ -179,6 +180,15 @@ public class MainActivity extends AppCompatActivity {
 
         // butterknife
         ButterKnife.unbind(this);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (menu.isDrawerOpen(GravityCompat.START)) {
+            menu.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
     }
 
     public ProgressBar getProgressBar() {

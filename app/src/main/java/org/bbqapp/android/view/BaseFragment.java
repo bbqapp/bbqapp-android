@@ -28,8 +28,12 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.widget.ProgressBar;
 
+import com.squareup.leakcanary.RefWatcher;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.inject.Inject;
 
 /**
  * Base fragment for all fragments in application
@@ -37,12 +41,16 @@ import java.util.List;
 public abstract class BaseFragment extends Fragment {
 
     private boolean injected = false;
+    private boolean active = false;
+
+    @Inject
+    RefWatcher refWatcher;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        if(!injected) {
+        if (!injected) {
             ((MainActivity) getActivity()).getObjectGraph().plus(getModules().toArray()).inject(this);
             injected = true;
         }
@@ -54,8 +62,29 @@ public abstract class BaseFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+
+        active = true;
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        active = false;
+    }
+
+    @Override
     public void onStop() {
         super.onStop();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        refWatcher.watch(this);
     }
 
     public ProgressBar getProgressbar() {
@@ -65,9 +94,13 @@ public abstract class BaseFragment extends Fragment {
     /**
      * Returns extensible list of modules of this fragment
      *
-     * @return list of modulesgit add
+     * @return list of modules to add
      */
     protected List<Object> getModules() {
         return new ArrayList<>();
+    }
+
+    public boolean isActive() {
+        return active;
     }
 }
