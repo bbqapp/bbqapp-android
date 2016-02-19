@@ -264,7 +264,7 @@ public class CreateFragment extends BaseFragment {
         if (resultCode == Activity.RESULT_OK && image != null) {
 
             Uri imageUri = Uri.fromFile(image);
-            picasso.load(imageUri).resize(512, 512).into(imageView);
+            picasso.load(imageUri).fit().centerCrop().into(imageView);
 
             Log.i(TAG, "onTakePictureResponse, image saved to: " + imageUri);
         }

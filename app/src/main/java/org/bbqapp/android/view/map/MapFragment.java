@@ -259,7 +259,8 @@ public class MapFragment extends BaseFragment implements OnMapReadyCallback, Loc
                             PictureInfo pictureInfo = picturesInfo.get(index);
 
                             picasso.load(pictureInfo.getMeta().getUrl())
-                                    .resize(512, 512)
+                                    .fit()
+                                    .centerCrop()
                                     .into(imageView);
                         }
                     }
