@@ -185,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if (menu.isDrawerOpen(GravityCompat.START)) {
-            menu.closeDrawer(GravityCompat.START);
+            menu.closeDrawers();
         } else {
             super.onBackPressed();
         }

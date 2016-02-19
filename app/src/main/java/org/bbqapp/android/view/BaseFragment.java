@@ -32,6 +32,7 @@ import android.widget.ProgressBar;
 import com.squareup.leakcanary.RefWatcher;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -112,7 +113,8 @@ public abstract class BaseFragment extends Fragment {
      * @return list of modules to add
      */
     protected List<Object> getModules() {
-        return new ArrayList<>();
+
+        return new ArrayList<>(Arrays.<Object>asList(new FragmentModule(this)));
     }
 
     public boolean isActive() {

@@ -24,6 +24,7 @@
 
 package org.bbqapp.android;
 
+import android.app.Application;
 import android.content.Context;
 import android.location.LocationManager;
 
@@ -68,8 +69,14 @@ public class AppModule {
 
     @Provides
     @Singleton
-    Context provideApplicationContext() {
+    Application provideApplication() {
         return app;
+    }
+
+    @Provides
+    @Singleton
+    Context provideApplicationContext(Application application) {
+        return application;
     }
 
     @Provides
@@ -80,11 +87,11 @@ public class AppModule {
 
     @Provides
     @Singleton
-    RefWatcher provideRefWatcher() {
+    RefWatcher provideRefWatcher(Application application) {
         if (BuildConfig.DEBUG) {
             return RefWatcher.DISABLED;
         } else {
-            return LeakCanary.install(app);
+            return LeakCanary.install(application);
         }
     }
 

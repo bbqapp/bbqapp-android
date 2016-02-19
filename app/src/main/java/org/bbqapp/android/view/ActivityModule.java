@@ -34,9 +34,6 @@ import org.bbqapp.android.auth.Facebook;
 import org.bbqapp.android.auth.GooglePlus;
 import org.bbqapp.android.service.GeocodeService;
 import org.bbqapp.android.service.LocationService;
-import org.bbqapp.android.view.create.CreateFragment;
-import org.bbqapp.android.view.list.ListFragment;
-import org.bbqapp.android.view.login.LoginFragment;
 
 import javax.inject.Singleton;
 
@@ -48,14 +45,8 @@ import de.halfbit.tinybus.TinyBus;
  * Module for all activities and for all its fragments
  */
 @Module(
-        injects = {
-                MainActivity.class,
-                CreateFragment.class,
-                ListFragment.class,
-                LoginFragment.class,
-                //MapFragment.class,
-        },
         addsTo = AppModule.class,
+        injects = MainActivity.class,
         library = true
 )
 public class ActivityModule {

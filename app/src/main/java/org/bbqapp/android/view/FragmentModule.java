@@ -22,26 +22,38 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android.view.map;
+package org.bbqapp.android.view;
 
-import android.app.Activity;
+import android.support.v4.app.Fragment;
 
-import org.bbqapp.android.view.FragmentModule;
+import org.bbqapp.android.view.create.CreateFragment;
+import org.bbqapp.android.view.list.ListFragment;
+import org.bbqapp.android.view.login.LoginFragment;
+
+import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
 
-/**
- *
- */
 @Module(
-        addsTo = FragmentModule.class,
-        injects = MapFragment.class
+        addsTo = ActivityModule.class,
+        injects = {
+                CreateFragment.class,
+                ListFragment.class,
+                LoginFragment.class,
+        },
+        library = true
 )
-public class MapFragmentModule {
+public class FragmentModule {
+    private final Fragment fragment;
+
+    FragmentModule(Fragment fragment) {
+        this.fragment = fragment;
+    }
 
     @Provides
-    PlaceClusterManager providePlaceClusterManager(Activity context) {
-        return new PlaceClusterManager(context);
+    @Singleton
+    Fragment provideFragment() {
+        return fragment;
     }
 }
