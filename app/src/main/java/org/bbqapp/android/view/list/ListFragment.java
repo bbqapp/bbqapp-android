@@ -43,6 +43,7 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import butterknife.Bind;
 import rx.Scheduler;
 import rx.Subscriber;
 import rx.Subscription;
@@ -54,7 +55,7 @@ import rx.schedulers.Schedulers;
  */
 public class ListFragment extends BaseFragment {
 
-    private ListView placeList;
+    @Bind(R.id.places_list) ListView placeList;
     private PlaceListAdapter placeAdapter;
     private Subscription locationSubscription;
 
@@ -72,11 +73,7 @@ public class ListFragment extends BaseFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if (placeList == null) {
-            placeList = (ListView) inflater.inflate(R.layout.view_list, container, false);
-        }
-
-        return placeList;
+        return inflater.inflate(R.layout.view_list, container, false);
     }
 
     @Override

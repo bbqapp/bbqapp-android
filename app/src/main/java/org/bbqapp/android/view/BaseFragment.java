@@ -26,6 +26,7 @@ package org.bbqapp.android.view;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.view.View;
 import android.widget.ProgressBar;
 
 import com.squareup.leakcanary.RefWatcher;
@@ -34,6 +35,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
+
+import butterknife.ButterKnife;
 
 /**
  * Base fragment for all fragments in application
@@ -54,6 +57,18 @@ public abstract class BaseFragment extends Fragment {
             ((MainActivity) getActivity()).getObjectGraph().plus(getModules().toArray()).inject(this);
             injected = true;
         }
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ButterKnife.bind(this, view);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        ButterKnife.unbind(this);
     }
 
     @Override

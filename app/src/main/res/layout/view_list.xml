@@ -22,8 +22,16 @@
   ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   ~ SOFTWARE.
   -->
-
-<ListView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_height="match_parent"
+<!--
+<android.support.v4.widget.SwipeRefreshLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:choiceMode="singleChoice"/>
+    android:layout_height="match_parent">-->
+
+    <ListView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/places_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:choiceMode="singleChoice"/>
+<!--</android.support.v4.widget.SwipeRefreshLayout>-->

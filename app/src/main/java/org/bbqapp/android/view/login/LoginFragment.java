@@ -49,7 +49,6 @@ import org.bbqapp.android.view.LoginManager;
 import javax.inject.Inject;
 
 import butterknife.Bind;
-import butterknife.ButterKnife;
 import butterknife.OnClick;
 import de.halfbit.tinybus.Subscribe;
 import de.halfbit.tinybus.TinyBus;
@@ -81,11 +80,7 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.view_login, container, false);
-
-        ButterKnife.bind(this, view);
-
-        return view;
+        return inflater.inflate(R.layout.view_login, container, false);
     }
 
     @Override
@@ -120,12 +115,6 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
         super.onStop();
 
         getProgressbar().setIndeterminate(false);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        ButterKnife.unbind(this);
     }
 
     private void initOrUpdate() {
