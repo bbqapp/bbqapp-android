@@ -25,19 +25,28 @@
 package org.bbqapp.android.util;
 
 import java.text.DecimalFormat;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Formats distance in meters to human readable text
  */
 public class DistanceFormatter {
-    public static final String METERS_UNIT = "m";
-    public static final String KILOMETERS_UNIT = "km";
-    private static final String MILES_UNIT = "mi";
-    private static final double MILE_IN_METERS = 1_609.344d;
+    public static final String METER_UNIT = "m";
+    public static final String KILOMETER_UNIT = "km";
+    private static final String MILE_UNIT = "mi";
+    private static final String FEET_UNIT = "ft";
+    private static final double METERS_IN_ONE_MILE = 1_609.344d;
+    private static final double FEET_IN_ONE_MILE = 5280d;
+
+    private static final List<String> COUNTRIES_WITH_IMPERIAL_UNIT = Collections.unmodifiableList(Arrays.asList(
+            "US", "LR", "MM"));
 
     protected static final String VALUE_UNIT_SEPARATOR = " ";
 
-    private enum UnitSystem {
+    public enum Unit {
         METRIC,
         IMPERIAL
     }
@@ -49,7 +58,20 @@ public class DistanceFormatter {
      * @return human readable distance text
      */
     public static String format(double meters) {
-        return format(meters, UnitSystem.METRIC);
+        return format(meters, Locale.getDefault());
+    }
+
+    public static String format(double meters, Locale locale) {
+
+        return format(meters, getUnits(locale));
+    }
+
+    protected static Unit getUnits(Locale locale) {
+        String country = locale.getCountry();
+        if (country != null && COUNTRIES_WITH_IMPERIAL_UNIT.contains(country)) {
+            return Unit.IMPERIAL;
+        }
+        return Unit.METRIC;
     }
 
 
@@ -60,7 +82,7 @@ public class DistanceFormatter {
      * @param system unit system to use
      * @return human readable distance text
      */
-    private static String format(double meters, UnitSystem system) {
+    private static String format(double meters, Unit system) {
         switch (system) {
             case IMPERIAL:
                 return formatImperial(meters);
@@ -72,19 +94,24 @@ public class DistanceFormatter {
     protected static String formatMetric(double meters) {
         double absMeters = Math.abs(meters);
         if (absMeters < 1_000) {
-            return new DecimalFormat("#,###").format(meters) + VALUE_UNIT_SEPARATOR + METERS_UNIT;
+            return new DecimalFormat("#,###").format(meters) + VALUE_UNIT_SEPARATOR + METER_UNIT;
         } else if (absMeters < 100_000) {
-            return new DecimalFormat("#,###.#").format(meters / 1_000d) + VALUE_UNIT_SEPARATOR + KILOMETERS_UNIT;
+            return new DecimalFormat("#,###.#").format(meters / 1_000d) + VALUE_UNIT_SEPARATOR + KILOMETER_UNIT;
         } else {
-            return new DecimalFormat("#,###").format(meters / 1_000d) + VALUE_UNIT_SEPARATOR + KILOMETERS_UNIT;
+            return new DecimalFormat("#,###").format(meters / 1_000d) + VALUE_UNIT_SEPARATOR + KILOMETER_UNIT;
         }
     }
 
     protected static String formatImperial(double meters) {
-        // TODO
+        double miles = meters / METERS_IN_ONE_MILE;
+        double absMiles = Math.abs(miles);
 
-        double miles = meters / MILE_IN_METERS;
-        return new DecimalFormat("#,###.##").format(miles) + VALUE_UNIT_SEPARATOR + MILES_UNIT;
+        if (absMiles * FEET_IN_ONE_MILE < FEET_IN_ONE_MILE / 10) {
+            return new DecimalFormat("###").format(miles * FEET_IN_ONE_MILE) + VALUE_UNIT_SEPARATOR + FEET_UNIT;
+        } else if (absMiles < 1_000) {
+            return new DecimalFormat("#,###.##").format(miles) + VALUE_UNIT_SEPARATOR + MILE_UNIT;
+        } else {
+            return new DecimalFormat("#,###").format(miles) + VALUE_UNIT_SEPARATOR + MILE_UNIT;
+        }
     }
-
 }
