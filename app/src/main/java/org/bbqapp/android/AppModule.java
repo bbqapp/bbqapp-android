@@ -41,6 +41,8 @@ import org.bbqapp.android.api.converter.LatLngConverterFactory;
 import org.bbqapp.android.api.converter.LocationConverterFactory;
 import org.bbqapp.android.api.converter.PictureConverterFactory;
 import org.bbqapp.android.api.service.PlaceService;
+import org.bbqapp.android.service.GeocodeService;
+import org.bbqapp.android.service.LocationService;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -75,14 +77,20 @@ public class AppModule {
 
     @Provides
     @Singleton
-    Context provideApplicationContext(Application application) {
-        return application;
+    LocationManager provideLocationManager(Application context) {
+        return (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
     }
 
     @Provides
     @Singleton
-    LocationManager provideLocationManager(Context context) {
-        return (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+    LocationService provideLocationService(LocationManager locationManager) {
+        return new LocationService(locationManager);
+    }
+
+    @Provides
+    @Singleton
+    GeocodeService provideGeocodeService(Application context) {
+        return new GeocodeService(context);
     }
 
     @Provides
@@ -97,7 +105,7 @@ public class AppModule {
 
     @Provides
     @Singleton
-    TinyBus provideTinyBus(Context context) {
+    TinyBus provideTinyBus(Application context) {
         return new TinyBus(context);
     }
 
@@ -110,7 +118,7 @@ public class AppModule {
 
     @Provides
     @Singleton
-    Picasso providePicasso(Context context, OkHttpClient client) {
+    Picasso providePicasso(Application context, OkHttpClient client) {
         return new Picasso.Builder(context)
                 .downloader(new OkHttp3Downloader(client))
                 .requestTransformer(new PicassoPictureRequestTransformer(BuildConfig.API_URL))

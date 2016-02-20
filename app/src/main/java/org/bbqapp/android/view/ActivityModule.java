@@ -25,15 +25,13 @@
 package org.bbqapp.android.view;
 
 import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
-import android.location.LocationManager;
 import android.view.LayoutInflater;
 
 import org.bbqapp.android.AppModule;
 import org.bbqapp.android.auth.Facebook;
 import org.bbqapp.android.auth.GooglePlus;
-import org.bbqapp.android.service.GeocodeService;
-import org.bbqapp.android.service.LocationService;
 
 import javax.inject.Singleton;
 
@@ -70,31 +68,19 @@ public class ActivityModule {
 
     @Provides
     @Singleton
-    LocationService provideLocationService(LocationManager locationManager) {
-        return new LocationService(locationManager);
-    }
-
-    @Provides
-    @Singleton
-    GeocodeService provideGeocodeService(Activity context) {
-        return new GeocodeService(context);
-    }
-
-    @Provides
-    @Singleton
     GooglePlus provideGooglePlus(Activity activity) {
         return new GooglePlus(activity);
     }
 
     @Provides
     @Singleton
-    Facebook provideFacebook(Context context) {
+    Facebook provideFacebook(Application context) {
         return new Facebook(context);
     }
 
     @Provides
     @Singleton
-    LoginManager provideLoginManager(Context context, TinyBus bus, GooglePlus plus, Facebook facebook) {
+    LoginManager provideLoginManager(Application context, TinyBus bus, GooglePlus plus, Facebook facebook) {
         return new LoginManager(context, bus, plus, facebook);
     }
 }

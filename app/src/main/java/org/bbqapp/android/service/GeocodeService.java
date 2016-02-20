@@ -45,7 +45,7 @@ public final class GeocodeService {
     private Context context;
 
     public GeocodeService(Context context) {
-        this.context = context.getApplicationContext();
+        this.context = context;
     }
 
     public Observable<Address> resolve(Observable<Location> location) {
