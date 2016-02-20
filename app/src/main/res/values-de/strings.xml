@@ -27,20 +27,20 @@
     <string name="app_name">bbqapp</string>
 
     <string name="action_settings">Settings</string>
-    <string name="open_menu">Open Menu</string>
-    <string name="close_menu">Close Menu</string>
+    <string name="open_menu">Menü öffnen</string>
+    <string name="close_menu">Menü schließen</string>
 
-    <string name="menu_map">Map</string>
+    <string name="menu_map">Karte</string>
     <string name="menu_login">Login</string>
-    <string name="menu_list">List</string>
-    <string name="menu_search">Search</string>
-    <string name="menu_create">New Place</string>
-    <string name="menu_settings">Settings</string>
+    <string name="menu_list">Liste</string>
+    <string name="menu_search">Suche</string>
+    <string name="menu_create">Neuer Platz</string>
+    <string name="menu_settings">Einstellungen</string>
     <string name="menu_notice">Legal Notice</string>
-    <string name="menu_contact">Contact</string>
-    <string name="logout">Logout</string>
+    <string name="menu_contact">Kontakt</string>
+    <string name="logout">Ausloggen</string>
 
-    <string name="address">Address</string>
-    <string name="take_picture">Take Picture</string>
-    <string name="location">Location</string>
+    <string name="address">Adresse</string>
+    <string name="take_picture">Bild aufnehmen</string>
+    <string name="location">Position</string>
 </resources>

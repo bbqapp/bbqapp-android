@@ -24,6 +24,8 @@
 
 package org.bbqapp.android.api.model;
 
+import android.net.Uri;
+
 import org.bbqapp.android.api.ProgressListener;
 
 import java.io.File;
@@ -50,6 +52,10 @@ public class Picture implements ProgressListener {
 
     public Picture(File file) throws FileNotFoundException {
         this(new FileInputStream(file), file.length());
+    }
+
+    public Picture(Uri file) throws FileNotFoundException {
+        this(new File(file.toString()));
     }
 
     @Override

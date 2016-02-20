@@ -76,7 +76,7 @@ public class ActivityModule {
 
     @Provides
     @Singleton
-    GeocodeService provideAsyncGeocoder(Activity context) {
+    GeocodeService provideGeocodeService(Activity context) {
         return new GeocodeService(context);
     }
 

@@ -24,37 +24,10 @@
 
 package org.bbqapp.android;
 
-import android.app.Application;
-
 import dagger.ObjectGraph;
-import timber.log.Timber;
 
-/**
- * Application to maintain global states
- */
-public class App extends Application implements Injector {
-    public ObjectGraph objectGraph;
+public interface Injector {
+    ObjectGraph getObjectGraph();
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
-
-        if (BuildConfig.DEBUG) {
-            Timber.plant(new Timber.DebugTree());
-        }
-
-        // dagger
-        AppModule module = new AppModule(this);
-        objectGraph = ObjectGraph.create(module);
-    }
-
-    @Override
-    public ObjectGraph getObjectGraph() {
-        return objectGraph;
-    }
-
-    @Override
-    public void inject(Object o) {
-        objectGraph.inject(o);
-    }
+    void inject(Object o);
 }

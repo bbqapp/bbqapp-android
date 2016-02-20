@@ -58,12 +58,12 @@ import org.bbqapp.android.view.BaseFragment;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import butterknife.Bind;
-import butterknife.ButterKnife;
 import butterknife.OnClick;
 import rx.Observable;
 import rx.Scheduler;
@@ -81,8 +81,6 @@ public class CreateFragment extends BaseFragment {
 
     private static final int TAKE_PICTURE_REQUEST_CODE = 1;
 
-    private View view;
-
     @Bind(R.id.view_create_take_picture)
     Button takePictureButton;
     @Bind(R.id.view_create_create)
@@ -98,7 +96,7 @@ public class CreateFragment extends BaseFragment {
     @Bind(R.id.view_create_address)
     TextView addressText;
 
-    private File image = null;
+    private Uri lastImageUri = null;
 
     @Inject
     GeocodeService geocodeService;
@@ -121,12 +119,11 @@ public class CreateFragment extends BaseFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if (view == null) {
-            view = inflater.inflate(R.layout.view_create, container, false);
-            ButterKnife.bind(this, view);
+        if (savedInstanceState != null) {
+            lastImageUri = (Uri) savedInstanceState.get("lastImageUri");
         }
 
-        return view;
+        return inflater.inflate(R.layout.view_create, container, false);
     }
 
     @Override
@@ -148,7 +145,6 @@ public class CreateFragment extends BaseFragment {
                     @Override
                     public void call(Location location) {
                         locationEditText.setText(String.format("%s, %s", location.getLatitude(), location.getLongitude()));
-
                     }
                 })
                 .observeOn(ioScheduler)
@@ -191,8 +187,13 @@ public class CreateFragment extends BaseFragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        ButterKnife.unbind(this);
-        view = null;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putParcelable("lastImageUri", lastImageUri);
     }
 
     @Override
@@ -246,27 +247,19 @@ public class CreateFragment extends BaseFragment {
     protected void takePicture() {
         File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
 
-        try {
-            image = File.createTempFile("takePicture_", ".jpg", dir);
+        //image = File.createTempFile("takePicture_", ".jpg", dir);
+        lastImageUri = Uri.fromFile(new File(dir, "take_Picture_" + UUID.randomUUID().toString() + ".jpg"));
 
-            Log.i(TAG, "take picture to: " + Uri.fromFile(image));
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, lastImageUri);
+        startActivityForResult(intent, TAKE_PICTURE_REQUEST_CODE);
 
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(image));
-            startActivityForResult(intent, TAKE_PICTURE_REQUEST_CODE);
 
-        } catch (IOException e) {
-            showMessage(e.getLocalizedMessage());
-        }
     }
 
     private void onTakePictureResponse(int resultCode) throws IOException {
-        if (resultCode == Activity.RESULT_OK && image != null) {
-
-            Uri imageUri = Uri.fromFile(image);
-            picasso.load(imageUri).fit().centerCrop().into(imageView);
-
-            Log.i(TAG, "onTakePictureResponse, image saved to: " + imageUri);
+        if (resultCode == Activity.RESULT_OK && lastImageUri != null) {
+            picasso.load(lastImageUri).resize(512, 512).centerCrop().into(imageView);
         }
     }
 
@@ -297,8 +290,8 @@ public class CreateFragment extends BaseFragment {
 
                     @Override
                     public void onNext(Id id) {
-                        setProgress("Place Created: " + id.getId(), image == null ? 100 : null);
-                        if (image == null) {
+                        setProgress("Place Created: " + id.getId(), lastImageUri == null ? 100 : null);
+                        if (lastImageUri == null) {
                             return;
                         }
 
@@ -310,7 +303,7 @@ public class CreateFragment extends BaseFragment {
     private void uploadImage(final Id id) {
         Picture picture;
         try {
-            picture = new Picture(image) {
+            picture = new Picture(lastImageUri) {
                 @Override
                 public void onProgress(long contentLength, long transferred) {
                     int percent = (int) (transferred / (contentLength / 100));

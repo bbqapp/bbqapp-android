@@ -24,12 +24,15 @@
 
 package org.bbqapp.android.view;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.View;
 import android.widget.ProgressBar;
 
 import com.squareup.leakcanary.RefWatcher;
+
+import org.bbqapp.android.Injector;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,26 +41,43 @@ import java.util.List;
 import javax.inject.Inject;
 
 import butterknife.ButterKnife;
+import dagger.ObjectGraph;
 
 /**
  * Base fragment for all fragments in application
  */
-public abstract class BaseFragment extends Fragment {
+public abstract class BaseFragment extends Fragment implements Injector {
 
-    private boolean injected = false;
     private boolean active = false;
+
+    private ObjectGraph objectGraph;
 
     @Inject
     RefWatcher refWatcher;
 
     @Override
+    public void inject(Object o) {
+        objectGraph.inject(o);
+    }
+
+    @Override
+    public ObjectGraph getObjectGraph() {
+        return objectGraph;
+    }
+
+    private void prepareAndInject(Context context) {
+        Injector injector = (Injector) context;
+        if (objectGraph == null && injector != null && injector.getObjectGraph() != null) {
+            objectGraph = injector.getObjectGraph().plus(getModules().toArray());
+            inject(this);
+        }
+    }
+
+    @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        if (!injected) {
-            ((MainActivity) getActivity()).getObjectGraph().plus(getModules().toArray()).inject(this);
-            injected = true;
-        }
+        prepareAndInject(getActivity());
     }
 
     @Override
@@ -73,8 +93,9 @@ public abstract class BaseFragment extends Fragment {
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
     }
 
     @Override
@@ -92,13 +113,11 @@ public abstract class BaseFragment extends Fragment {
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
-    }
-
-    @Override
     public void onDestroy() {
         super.onDestroy();
+
+        // dagger
+        objectGraph = null;
 
         refWatcher.watch(this);
     }
