@@ -26,9 +26,9 @@ package org.bbqapp.android.view;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.ProgressBar;
+import android.view.ViewGroup;
 
 import com.squareup.leakcanary.RefWatcher;
 
@@ -43,27 +43,11 @@ import javax.inject.Inject;
 import butterknife.ButterKnife;
 import dagger.ObjectGraph;
 
-/**
- * Base fragment for all fragments in application
- */
-public abstract class BaseFragment extends Fragment implements Injector {
-
-    private boolean active = false;
-
+public class BaseActivity extends AppCompatActivity implements Injector {
     private ObjectGraph objectGraph;
 
     @Inject
     RefWatcher refWatcher;
-
-    @Override
-    public void inject(Object o) {
-        objectGraph.inject(o);
-    }
-
-    @Override
-    public ObjectGraph getObjectGraph() {
-        return objectGraph;
-    }
 
     private void prepareAndInject(Context context) {
         Injector injector = (Injector) context;
@@ -74,69 +58,61 @@ public abstract class BaseFragment extends Fragment implements Injector {
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
         // dagger
-        prepareAndInject(getActivity());
+        prepareAndInject(getApplicationContext());
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        ButterKnife.bind(this, view);
+    public void setContentView(int layoutResID) {
+        super.setContentView(layoutResID);
+
+        // butterknife
+        ButterKnife.bind(this);
     }
 
     @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        ButterKnife.unbind(this);
+    public void setContentView(View view) {
+        super.setContentView(view);
+
+        // butterknife
+        ButterKnife.bind(this);
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setRetainInstance(true);
+    public void setContentView(View view, ViewGroup.LayoutParams params) {
+        super.setContentView(view, params);
+
+        // butterknife
+        ButterKnife.bind(this);
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-
-        active = true;
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-
-        active = false;
-    }
-
-    @Override
-    public void onDestroy() {
+    protected void onDestroy() {
         super.onDestroy();
 
         // dagger
         objectGraph = null;
 
+        // butterknife
+        ButterKnife.unbind(this);
+
         refWatcher.watch(this);
     }
 
-    public ProgressBar getProgressbar() {
-        return ((MainActivity) getActivity()).getProgressBar();
+    @Override
+    public ObjectGraph getObjectGraph() {
+        return objectGraph;
     }
 
-    /**
-     * Returns extensible list of modules of this fragment
-     *
-     * @return list of modules to add
-     */
+    @Override
+    public void inject(Object o) {
+        objectGraph.inject(o);
+    }
+
     protected List<Object> getModules() {
-        return new ArrayList<>(Arrays.<Object>asList(new FragmentModule(this)));
-    }
-
-    public boolean isActive() {
-        return active;
+        return new ArrayList<>(Arrays.<Object>asList(new ActivityModule(this)));
     }
 }

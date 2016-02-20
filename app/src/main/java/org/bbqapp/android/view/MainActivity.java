@@ -32,7 +32,6 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -41,9 +40,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import org.bbqapp.android.App;
 import org.bbqapp.android.BuildConfig;
-import org.bbqapp.android.Injector;
 import org.bbqapp.android.R;
 import org.bbqapp.android.auth.AuthCancel;
 import org.bbqapp.android.auth.AuthData;
@@ -59,12 +56,11 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import butterknife.Bind;
-import butterknife.ButterKnife;
 import dagger.ObjectGraph;
 import de.halfbit.tinybus.Subscribe;
 import de.halfbit.tinybus.TinyBus;
 
-public class MainActivity extends AppCompatActivity implements Injector {
+public class MainActivity extends BaseActivity {
 
     private static final String TAG = MainActivity.class.getName();
 
@@ -100,16 +96,8 @@ public class MainActivity extends AppCompatActivity implements Injector {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // dagger
-        objectGraph = ((App) getApplication()).getObjectGraph();
-        objectGraph = objectGraph.plus(new ActivityModule(this));
-        objectGraph.inject(this);
-
 
         setContentView(R.layout.activity_main);
-
-        ButterKnife.bind(this);
-
 
         setSupportActionBar(toolbar);
 
@@ -170,17 +158,6 @@ public class MainActivity extends AppCompatActivity implements Injector {
         super.onStop();
 
         bus.unregister(this);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        // dagger
-        objectGraph = null;
-
-        // butterknife
-        ButterKnife.unbind(this);
     }
 
     @Override
@@ -270,16 +247,6 @@ public class MainActivity extends AppCompatActivity implements Injector {
 
         // propagate results to auth services
         loginManager.onActivityResult(requestCode, resultCode, data);
-    }
-
-    @Override
-    public ObjectGraph getObjectGraph() {
-        return objectGraph;
-    }
-
-    @Override
-    public void inject(Object o) {
-        objectGraph.inject(o);
     }
 
     @Subscribe
