@@ -104,5 +104,11 @@
             android:layout_height="wrap_content"
             android:text="Create"/>
 
+        <Button
+            android:id="@+id/select_location"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="select location"/>
+
     </LinearLayout>
 </ScrollView>

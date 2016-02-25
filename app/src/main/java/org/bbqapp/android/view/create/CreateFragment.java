@@ -58,6 +58,7 @@ import org.bbqapp.android.view.BaseFragment;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.UUID;
 
 import javax.inject.Inject;
@@ -81,6 +82,10 @@ public class CreateFragment extends BaseFragment {
 
     private static final int TAKE_PICTURE_REQUEST_CODE = 1;
 
+    private Uri lastImageUri = null;
+    private Subscription subscriber;
+    private ArrayList<Uri> addedMedias;
+
     @Bind(R.id.view_create_take_picture)
     Button takePictureButton;
     @Bind(R.id.view_create_create)
@@ -96,14 +101,10 @@ public class CreateFragment extends BaseFragment {
     @Bind(R.id.view_create_address)
     TextView addressText;
 
-    private Uri lastImageUri = null;
-
     @Inject
     GeocodeService geocodeService;
-
     @Inject
     LocationService locationService;
-
     @Inject
     PlaceService placeService;
     @Inject
@@ -115,12 +116,14 @@ public class CreateFragment extends BaseFragment {
     @Named("io")
     Scheduler ioScheduler;
 
-    private Subscription subscriber;
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             lastImageUri = (Uri) savedInstanceState.get("lastImageUri");
+            addedMedias = savedInstanceState.getParcelableArrayList("addedMedias");
+        }
+        if (addedMedias == null) {
+            addedMedias = new ArrayList<>();
         }
 
         return inflater.inflate(R.layout.view_create, container, false);
@@ -185,15 +188,16 @@ public class CreateFragment extends BaseFragment {
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-    }
-
-    @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        outState.putParcelable("lastImageUri", lastImageUri);
+        if (lastImageUri != null) {
+            outState.putParcelable("lastImageUri", lastImageUri);
+        }
+
+        if (addedMedias != null && !addedMedias.isEmpty()) {
+            outState.putParcelableArrayList("addedMedias", addedMedias);
+        }
     }
 
     @Override
@@ -259,7 +263,9 @@ public class CreateFragment extends BaseFragment {
 
     private void onTakePictureResponse(int resultCode) throws IOException {
         if (resultCode == Activity.RESULT_OK && lastImageUri != null) {
+            addedMedias.add(lastImageUri);
             picasso.load(lastImageUri).resize(512, 512).centerCrop().into(imageView);
+            lastImageUri = null;
         }
     }
 
@@ -337,5 +343,11 @@ public class CreateFragment extends BaseFragment {
                         setProgress("Image uploaded: " + id.getId(), 100);
                     }
                 });
+    }
+
+    @OnClick(R.id.select_location)
+    public void onSelectLocation() {
+        Intent intent = SelectLocationActivity.createIntent(getContext());
+        startActivityForResult(intent, 0);
     }
 }

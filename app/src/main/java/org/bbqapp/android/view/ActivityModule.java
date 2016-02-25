@@ -32,6 +32,7 @@ import android.view.LayoutInflater;
 import org.bbqapp.android.AppModule;
 import org.bbqapp.android.auth.Facebook;
 import org.bbqapp.android.auth.GooglePlus;
+import org.bbqapp.android.view.create.SelectLocationActivity;
 
 import javax.inject.Singleton;
 
@@ -44,7 +45,10 @@ import de.halfbit.tinybus.TinyBus;
  */
 @Module(
         addsTo = AppModule.class,
-        injects = MainActivity.class,
+        injects = {
+                MainActivity.class,
+                SelectLocationActivity.class,
+        },
         library = true
 )
 public class ActivityModule {
