@@ -201,19 +201,6 @@ public abstract class AbstractListAdapter<T> implements ListAdapter {
     }
 
     /**
-     * Sorts list in ascending natural order
-     */
-    public void sort() {
-        if (!isEmpty()) {
-            Collections.sort(getAsComparableList());
-        }
-    }
-
-    private <S extends Comparable<? super S>> List<S> getAsComparableList() {
-        return (List<S>) getList();
-    }
-
-    /**
      * List of objects to render
      *
      * @return objects to render

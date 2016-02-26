@@ -16,6 +16,8 @@
 #   public *;
 #}
 
+# gradle retrolambda
+-dontwarn java.lang.invoke.*
 
 # retrofit2
 -dontwarn retrofit2.**

@@ -29,6 +29,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 
+import com.annimon.stream.Stream;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
@@ -57,9 +58,7 @@ public final class GeocodeService {
         final ReplaySubject<Address> subject = ReplaySubject.createWithSize(maxResults);
 
         try {
-            for (Address address : geocode(location, maxResults)) {
-                subject.onNext(address);
-            }
+            Stream.of(geocode(location, maxResults)).forEach(subject::onNext);
             subject.onCompleted();
         } catch (IOException e) {
             subject.onError(e);
@@ -80,9 +79,7 @@ public final class GeocodeService {
         final ReplaySubject<Address> subject = ReplaySubject.createWithSize(maxResults);
 
         try {
-            for (Address address : geocode(location, maxResults)) {
-                subject.onNext(address);
-            }
+            Stream.of(geocode(location, maxResults)).forEach(subject::onNext);
             subject.onCompleted();
         } catch (IOException e) {
             subject.onError(e);
