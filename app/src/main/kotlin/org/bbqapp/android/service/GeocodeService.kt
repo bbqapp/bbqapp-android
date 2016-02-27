@@ -34,7 +34,7 @@ import rx.Observable
 import rx.subjects.ReplaySubject
 import java.io.IOException
 
-class GeocodeService2(private val context: Context) {
+class GeocodeService(private val context: Context) {
     private val DEFAULT_MAX_RESULTS = 1
 
     fun resolve(location: Location) = resolve(location, DEFAULT_MAX_RESULTS)

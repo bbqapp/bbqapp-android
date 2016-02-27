@@ -44,7 +44,6 @@ import org.bbqapp.android.api.converter.LocationConverterFactory;
 import org.bbqapp.android.api.converter.PictureConverterFactory;
 import org.bbqapp.android.api.service.PlaceService;
 import org.bbqapp.android.service.GeocodeService;
-import org.bbqapp.android.service.GeocodeService2;
 import org.bbqapp.android.service.LocationService;
 
 import javax.inject.Named;
@@ -95,12 +94,6 @@ public class AppModule {
     @Singleton
     GeocodeService provideGeocodeService(Application context) {
         return new GeocodeService(context);
-    }
-
-    @Provides
-    @Singleton
-    GeocodeService2 provideGeocodeService2(Application context) {
-        return new GeocodeService2(context);
     }
 
     @Provides
