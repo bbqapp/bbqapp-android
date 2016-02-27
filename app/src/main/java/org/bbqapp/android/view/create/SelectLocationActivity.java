@@ -36,8 +36,8 @@ import android.os.Parcelable;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ListView;
 
+import com.github.ksoichiro.android.observablescrollview.ObservableListView;
 import com.github.ksoichiro.android.observablescrollview.ObservableScrollViewCallbacks;
 import com.github.ksoichiro.android.observablescrollview.ScrollState;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -49,7 +49,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.nineoldandroids.view.ViewHelper;
 
 import org.bbqapp.android.R;
 import org.bbqapp.android.service.GeocodeService;
@@ -74,7 +73,7 @@ public class SelectLocationActivity extends BaseActivity implements OnMapReadyCa
     private static final int GEOCODER_MAX_RESULTS = 5;
 
     @Bind(R.id.addresses)
-    ListView addresses;
+    ObservableListView addresses;
     @Bind(R.id.toolbar)
     Toolbar toolbar;
     @Bind(R.id.google_map_wrapper)
@@ -137,6 +136,8 @@ public class SelectLocationActivity extends BaseActivity implements OnMapReadyCa
                 finish();
             }
         });
+
+        addresses.setScrollViewCallbacks(this);
         /*
         Point windowSize = new Point();
         getWindowManager().getDefaultDisplay().getSize(windowSize);
@@ -174,29 +175,15 @@ public class SelectLocationActivity extends BaseActivity implements OnMapReadyCa
                     }
                 })
                 .timeout(10, TimeUnit.SECONDS, Observable.<Location>just(null))
+                .filter(location -> location != null)
                 .subscribeOn(ioScheduler)
                 .unsubscribeOn(ioScheduler)
                 .observeOn(mainScheduler)
-                .subscribe(new Subscriber<Location>() {
-                    @Override
-                    public void onCompleted() {
-                        Timber.w("Location stream was completed unexpectedly");
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        Timber.e(e, "Could not resolve addresses");
-                    }
-
-                    @Override
-                    public void onNext(Location location) {
-                        if (location == null) {
-                            unsubscribe();
-                            return;
-                        }
-                        updateLocation(location);
-                    }
-                });
+                .subscribe(
+                        this::updateLocation,
+                        e -> Timber.w(e, "Location stream was completed unexpectedly"),
+                        () -> Timber.w("Location stream was completed unexpectedly")
+                );
     }
 
     @Override
@@ -219,12 +206,7 @@ public class SelectLocationActivity extends BaseActivity implements OnMapReadyCa
         googleMap.setLocationSource(this);
         googleMap.setMyLocationEnabled(true);
 
-        googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-            @Override
-            public void onMapClick(LatLng latLng) {
-                setMarker(latLng);
-            }
-        });
+        googleMap.setOnMapClickListener(this::setMarker);
 
         googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
             private void addTempLocationInList(Marker marker) {
@@ -248,12 +230,9 @@ public class SelectLocationActivity extends BaseActivity implements OnMapReadyCa
             }
         });
 
-        googleMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
-            @Override
-            public boolean onMyLocationButtonClick() {
-                setMarker(toLatLng(currentLocation));
-                return false;
-            }
+        googleMap.setOnMyLocationButtonClickListener(() -> {
+            setMarker(toLatLng(currentLocation));
+            return false;
         });
     }
 
@@ -371,7 +350,8 @@ public class SelectLocationActivity extends BaseActivity implements OnMapReadyCa
 
     @Override
     public void onScrollChanged(int scrollY, boolean firstScroll, boolean dragging) {
-        ViewHelper.setTranslationY(googleMapWrapper, -scrollY / 2);
+        //ViewHelper.setTranslationY(googleMapWrapper, -scrollY / 2);
+        //ViewHelper.setY(addresses, googleMapWrapper.getHeight() - scrollY*2);
         //ViewHelper.setTranslationY(listBackground, Math.max(0, -scrollY + mapWrapperHeight));
     }
 

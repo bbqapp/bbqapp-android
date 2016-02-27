@@ -31,23 +31,30 @@
 
     <include layout="@layout/toolbar"/>
 
-
-    <RelativeLayout
-        android:id="@+id/google_map_wrapper"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="300dp"
-        android:scaleType="centerCrop">
+        android:layout_height="match_parent">
 
-        <fragment
-            android:id="@+id/google_map"
-            class="com.google.android.gms.maps.SupportMapFragment"
+        <RelativeLayout
+            android:id="@+id/google_map_wrapper"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-    </RelativeLayout>
+            android:layout_height="300dp"
+            android:scaleType="centerCrop">
 
-    <ListView
-        android:id="@+id/addresses"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+            <fragment
+                android:id="@+id/google_map"
+                class="com.google.android.gms.maps.SupportMapFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+        </RelativeLayout>
+
+        <com.github.ksoichiro.android.observablescrollview.ObservableListView
+            android:id="@+id/addresses"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="300dp"/>
+
+    </FrameLayout>
+
 
 </LinearLayout>

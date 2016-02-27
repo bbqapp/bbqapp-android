@@ -33,8 +33,8 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import org.bbqapp.android.R;
-import org.bbqapp.android.api.model.Place;
-import org.bbqapp.android.api.service.PlaceService;
+import org.bbqapp.android.api2.model.Place;
+import org.bbqapp.android.api2.service.PlaceService;
 import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.view.BaseFragment;
 

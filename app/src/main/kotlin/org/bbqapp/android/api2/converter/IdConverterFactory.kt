@@ -22,37 +22,31 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android.api.converter;
+package org.bbqapp.android.api2.converter
 
-import org.bbqapp.android.api2.model.Id;
+import org.bbqapp.android.api2.model.Id
+import retrofit2.Converter
+import retrofit2.Retrofit
+import java.io.IOException
+import java.lang.reflect.Type
 
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
+class IdConverterFactory private constructor() : Converter.Factory() {
 
-import retrofit2.Converter;
-import retrofit2.Retrofit;
-
-public class IdConverterFactory extends Converter.Factory {
-    public static IdConverterFactory create() {
-        return new IdConverterFactory();
-    }
-
-    private IdConverterFactory() {
-    }
-
-    @Override
-    public Converter<?, String> stringConverter(Type type, Annotation[] annotations, Retrofit retrofit) {
-        if (type instanceof Class && ((Class<?>) type).isAssignableFrom(Id.class)) {
-            return new IdConverter();
+    override fun stringConverter(type: Type?, annotations: Array<Annotation>?, retrofit: Retrofit?): Converter<*, String>? {
+        if (type is Class<*> && type.isAssignableFrom(Id::class.java)) {
+            return IdConverter()
         }
-        return super.stringConverter(type, annotations, retrofit);
+        return super.stringConverter(type, annotations, retrofit)
     }
 
-    private class IdConverter implements Converter<Id, String> {
-        @Override
-        public String convert(Id value) throws IOException {
-            return value.getId();
+    private inner class IdConverter : Converter<Id, String> {
+        @Throws(IOException::class)
+        override fun convert(value: Id) = value.id
+    }
+
+    companion object {
+        fun create(): IdConverterFactory {
+            return IdConverterFactory()
         }
     }
 }

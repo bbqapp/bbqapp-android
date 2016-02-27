@@ -22,37 +22,24 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android.api.converter;
+package org.bbqapp.android.extension
 
-import org.bbqapp.android.api2.model.Id;
+import java.io.InputStream
+import java.io.OutputStream
 
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-
-import retrofit2.Converter;
-import retrofit2.Retrofit;
-
-public class IdConverterFactory extends Converter.Factory {
-    public static IdConverterFactory create() {
-        return new IdConverterFactory();
+fun InputStream.copyTo(output: OutputStream,
+                       bufferSize: Int = DEFAULT_BUFFER_SIZE,
+                       listener: ((Long) -> Unit)? = null): Long {
+    var total: Long = 0
+    val buffer = ByteArray(bufferSize)
+    var read = read(buffer)
+    while (read >= 0) {
+        output.write(buffer, 0, read)
+        listener?.let { listener(total) }
+        total += read
+        read = read(buffer)
     }
-
-    private IdConverterFactory() {
-    }
-
-    @Override
-    public Converter<?, String> stringConverter(Type type, Annotation[] annotations, Retrofit retrofit) {
-        if (type instanceof Class && ((Class<?>) type).isAssignableFrom(Id.class)) {
-            return new IdConverter();
-        }
-        return super.stringConverter(type, annotations, retrofit);
-    }
-
-    private class IdConverter implements Converter<Id, String> {
-        @Override
-        public String convert(Id value) throws IOException {
-            return value.getId();
-        }
-    }
+    return total
 }
+
+fun InputStream.copyTo(output: OutputStream, listener: ((Long) -> Unit)? = null) = copyTo(output, DEFAULT_BUFFER_SIZE, listener)

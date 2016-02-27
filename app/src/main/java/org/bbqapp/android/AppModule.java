@@ -28,6 +28,8 @@ import android.app.Application;
 import android.content.Context;
 import android.location.LocationManager;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.module.kotlin.KotlinModule;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.jakewharton.picasso.OkHttp3Downloader;
@@ -55,6 +57,7 @@ import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.converter.jackson.JacksonConverterFactory;
 import rx.Scheduler;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
@@ -140,6 +143,7 @@ public class AppModule {
 
     @Provides
     @Singleton
+    @Named("v1")
     Retrofit provideRetrofit(OkHttpClient client, Gson gson) {
         return new Retrofit.Builder()
                 .client(client)
@@ -155,8 +159,35 @@ public class AppModule {
 
     @Provides
     @Singleton
-    PlaceService providePlacesService(Retrofit retrofit) {
+    ObjectMapper provideObjectMapper() {
+        return new ObjectMapper().registerModule(new KotlinModule());
+    }
+
+    @Provides
+    @Singleton
+    @Named("v2")
+    Retrofit provideRetrofit2(OkHttpClient client, ObjectMapper objectMapper) {
+        return new Retrofit.Builder()
+                .client(client)
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .addConverterFactory(org.bbqapp.android.api2.converter.PictureConverterFactory.Companion.create())
+                .addConverterFactory(org.bbqapp.android.api2.converter.IdConverterFactory.Companion.create())
+                .addConverterFactory(org.bbqapp.android.api2.converter.LocationConverterFactory.Companion.create())
+                .addConverterFactory(JacksonConverterFactory.create(objectMapper))
+                .baseUrl(BuildConfig.API_HOST)
+                .build();
+    }
+
+    @Provides
+    @Singleton
+    PlaceService providePlacesService(@Named("v1") Retrofit retrofit) {
         return retrofit.create(PlaceService.class);
+    }
+
+    @Provides
+    @Singleton
+    org.bbqapp.android.api2.service.PlaceService providePlaceService(@Named("v2") Retrofit retrofit) {
+        return retrofit.create(org.bbqapp.android.api2.service.PlaceService.class);
     }
 
     @Provides

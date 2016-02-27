@@ -34,19 +34,23 @@ import rx.Observable
 import rx.subjects.ReplaySubject
 import java.io.IOException
 
-class GeocodeService2(val context: Context) {
+class GeocodeService2(private val context: Context) {
     private val DEFAULT_MAX_RESULTS = 1
 
+    fun resolve(location: Location) = resolve(location, DEFAULT_MAX_RESULTS)
+    fun resolve(location: Location, maxResults: Int) = resolve(location.getLatLng(), maxResults)
+
     fun resolve(position: LatLng) = resolve(position, DEFAULT_MAX_RESULTS)
+    fun resolve(position: LatLng, maxResults: Int) = resolve(maxResults, { geocode(position, maxResults) })
+
     fun resolve(location: String) = resolve(location, DEFAULT_MAX_RESULTS)
-    fun resolve(location: Location) = resolve(location.getLatLng(), DEFAULT_MAX_RESULTS)
-    fun resolve(position: LatLng, maxResults: Int) = resolve(maxResults, { results: Int -> geocode(position, results) })
-    fun resolve(location: String, maxResults: Int) = resolve(maxResults, { results: Int -> geocode(location, results) })
-    private fun resolve(maxResults: Int, geocodeFun: (Int) -> List<Address>): Observable<Address> {
+    fun resolve(location: String, maxResults: Int) = resolve(maxResults, { geocode(location, maxResults) })
+
+    private fun resolve(maxResults: Int, geocodeFun: () -> List<Address>): Observable<Address> {
         val subject = ReplaySubject.createWithSize<Address>(maxResults)
 
         try {
-            geocodeFun(maxResults).forEach({ subject.onNext(it) })
+            geocodeFun().forEach { subject.onNext(it) }
             subject.onCompleted()
         } catch (e: IOException) {
             subject.onError(e)
