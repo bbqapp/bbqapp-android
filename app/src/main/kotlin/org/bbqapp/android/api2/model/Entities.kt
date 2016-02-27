@@ -30,49 +30,55 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import java.io.*
 
 import org.bbqapp.android.extension.copyTo;
+import timber.log.Timber
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 interface Entity
 
-open class Id(
-        @JsonProperty("_id") val id: String? = null) : Entity
+interface HasId : Entity {
+    val id: String?
+}
 
-class Address : Entity
+data class Id(@JsonProperty("_id") override val id: String? = null) : HasId
 
-class Location(
+data class Address(val country: String) : Entity
+
+data class Location(
         val coordinates: List<Double>, val type: String) : Entity
 
-class Comment(val comment:String,
+data class Comment(val comment: String,
               val score: Int) : Entity
 
-class Place(
-        @JsonProperty("_id") id: String? = null,
+data class Place(
+        @JsonProperty("_id") override val id: String? = null,
         val tags: List<String>? = null,
         val address: Address? = null,
         val location: Location,
-        val comments: List<Comment>? = null) : Id(id)
+        val comments: List<Comment>? = null) : HasId
 
-class PictureInfo(
-        @JsonProperty("_id") id: String,
+data class PictureInfo(
+        @JsonProperty("_id") override val id: String,
         @JsonProperty("_place") val placeId: String,
-        val meta: PictureMeta) : Id(id)
+        val meta: PictureMeta) : HasId
 
-class PictureMeta(
+data class PictureMeta(
         val mimeType: String,
         val url: String) : Entity
 
-class Picture(val stream: InputStream, val length: Long = -1) {
+data class Picture(val input: InputStream, val length: Long = -1) {
     constructor(file: File) : this(FileInputStream(file), file.length())
+
     constructor(uri: Uri) : this(File(uri.toString()))
 
     @Throws(IOException::class)
     fun out(out: OutputStream, progress: ((Long, Long) -> Unit)? = null): Long {
         try {
-            return stream.copyTo(out, {t: Long -> progress?.let { progress(length, t) }})
+            return input.copyTo(out, { t: Long -> progress?.let { progress(length, t) } })
         } finally {
             try {
-                stream.close()
-            } catch (ignored: IOException) {
+                input.close()
+            } catch (e: IOException) {
+                Timber.w(e, "Could not close input stream")
             }
         }
     }

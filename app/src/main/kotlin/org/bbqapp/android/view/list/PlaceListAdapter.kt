@@ -37,7 +37,7 @@ import org.bbqapp.android.util.DistanceFormatter
 import java.util.*
 import kotlin.comparisons.compareValues
 
-internal class PlaceListAdapter(private val layoutInflater: LayoutInflater) : AbstractListAdapter<Place>(), Comparator<Place> {
+class PlaceListAdapter(private val layoutInflater: LayoutInflater) : AbstractListAdapter<Place>(), Comparator<Place> {
     private var places: List<Place>? = null
     private var location: Location? = null
 

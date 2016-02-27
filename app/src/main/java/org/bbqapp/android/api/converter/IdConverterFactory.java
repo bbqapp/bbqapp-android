@@ -24,7 +24,7 @@
 
 package org.bbqapp.android.api.converter;
 
-import org.bbqapp.android.api2.model.Id;
+import org.bbqapp.android.api2.model.HasId;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -43,15 +43,15 @@ public class IdConverterFactory extends Converter.Factory {
 
     @Override
     public Converter<?, String> stringConverter(Type type, Annotation[] annotations, Retrofit retrofit) {
-        if (type instanceof Class && ((Class<?>) type).isAssignableFrom(Id.class)) {
+        if (type instanceof Class && ((Class<?>) type).isAssignableFrom(HasId.class)) {
             return new IdConverter();
         }
         return super.stringConverter(type, annotations, retrofit);
     }
 
-    private class IdConverter implements Converter<Id, String> {
+    private class IdConverter implements Converter<HasId, String> {
         @Override
-        public String convert(Id value) throws IOException {
+        public String convert(HasId value) throws IOException {
             return value.getId();
         }
     }
