@@ -22,44 +22,31 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android.api.model;
+package org.bbqapp.android.api.converter
 
-import java.util.List;
+import org.bbqapp.android.api.model.HasId
+import retrofit2.Converter
+import retrofit2.Retrofit
+import java.io.IOException
+import java.lang.reflect.Type
 
-public class Location extends Entity {
-    private List<Double> coordinates;
-    private String type;
+class IdConverterFactory private constructor() : Converter.Factory() {
 
-    public Location() {
+    override fun stringConverter(type: Type?, annotations: Array<Annotation>?, retrofit: Retrofit?): Converter<*, String>? {
+        if (type is Class<*> && type.isAssignableFrom(HasId::class.java)) {
+            return IdConverter()
+        }
+        return super.stringConverter(type, annotations, retrofit)
     }
 
-    public Location(String type) {
-        this();
-        setType(type);
+    private inner class IdConverter : Converter<HasId, String> {
+        @Throws(IOException::class)
+        override fun convert(value: HasId) = value.id
     }
 
-    public Location(String type, List<Double> coordinates) {
-        this(type);
-        setCoordinates(coordinates);
-    }
-
-    public List<Double> getCoordinates() {
-        return coordinates;
-    }
-
-    public void setCoordinates(List<Double> coordinates) {
-        this.coordinates = coordinates;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public Point toPoint() {
-        return new Point(this);
+    companion object {
+        fun create(): IdConverterFactory {
+            return IdConverterFactory()
+        }
     }
 }

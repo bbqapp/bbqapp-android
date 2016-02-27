@@ -22,13 +22,13 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android.api2.converter
+package org.bbqapp.android.api.converter
 
 import okhttp3.MediaType
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import okio.BufferedSink
-import org.bbqapp.android.api2.model.Picture
+import org.bbqapp.android.api.model.Picture
 import retrofit2.Converter
 import retrofit2.Retrofit
 import java.io.IOException
@@ -44,7 +44,7 @@ class PictureConverterFactory private constructor() : Converter.Factory() {
         return super.responseBodyConverter(type, annotations, retrofit)
     }
 
-    override fun requestBodyConverter(type: Type?, parameterAnnotations: Array<Annotation>?, methodAnnotations: Array<Annotation>?, retrofit: Retrofit?): Converter<*, RequestBody> {
+    override fun requestBodyConverter(type: Type?, parameterAnnotations: Array<Annotation>?, methodAnnotations: Array<Annotation>?, retrofit: Retrofit?): Converter<*, RequestBody>? {
         if (isSupportedType(type)) {
             return PictureRequestConverter()
         }

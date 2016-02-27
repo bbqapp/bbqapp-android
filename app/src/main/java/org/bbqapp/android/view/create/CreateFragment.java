@@ -43,13 +43,15 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
+import com.annimon.stream.function.Function;
 import com.squareup.picasso.Picasso;
 
 import org.bbqapp.android.R;
 import org.bbqapp.android.api.model.Id;
 import org.bbqapp.android.api.model.Picture;
 import org.bbqapp.android.api.model.Place;
-import org.bbqapp.android.api.model.Point;
 import org.bbqapp.android.api.service.PlaceService;
 import org.bbqapp.android.service.GeocodeService;
 import org.bbqapp.android.service.LocationService;
@@ -59,6 +61,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import javax.inject.Inject;
@@ -271,10 +274,12 @@ public class CreateFragment extends BaseFragment {
 
     @OnClick(R.id.view_create_create)
     protected void create() {
-        Point location = new Point(locationEditText.getText().toString());
+        String coordinatesString = locationEditText.getText().toString();
+        List<Double> coordinates = Stream.of(coordinatesString.split(","))
+                .map(value -> Double.valueOf(value.trim()))
+                .collect(Collectors.toList());
 
-        final Place place = new Place();
-        place.setLocation(location);
+        final Place place = new Place(null, null, null, new org.bbqapp.android.api.model.Location(coordinates, "Point"), null);
 
         setProgress("Preparing...", null);
 
@@ -309,13 +314,7 @@ public class CreateFragment extends BaseFragment {
     private void uploadImage(final Id id) {
         Picture picture;
         try {
-            picture = new Picture(lastImageUri) {
-                @Override
-                public void onProgress(long contentLength, long transferred) {
-                    int percent = (int) (transferred / (contentLength / 100));
-                    setProgress("Upload image...", percent);
-                }
-            };
+            picture = new Picture(lastImageUri, null);
         } catch (FileNotFoundException e) {
             setProgress("Error occurred while image processing...", null);
             showMessage("Error occurred while image processing");

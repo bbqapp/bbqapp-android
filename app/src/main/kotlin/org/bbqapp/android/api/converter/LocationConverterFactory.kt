@@ -22,19 +22,33 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android.api.model;
+package org.bbqapp.android.api.converter
 
-import com.google.gson.annotations.SerializedName;
+import android.location.Location
+import retrofit2.Converter
+import retrofit2.Retrofit
+import java.io.IOException
+import java.lang.reflect.Type
 
-public class Error extends Entity {
-    @SerializedName("msg")
-    private String message;
+class LocationConverterFactory private constructor() : Converter.Factory() {
 
-    public String getMessage() {
-        return message;
+    override fun stringConverter(type: Type?, annotations: Array<Annotation>?, retrofit: Retrofit?): Converter<*, String>? {
+        if (type is Class<*> && type.isAssignableFrom(Location::class.java)) {
+            return LocationConverter()
+        }
+        return super.stringConverter(type, annotations, retrofit)
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    private inner class LocationConverter : Converter<Location, String> {
+        @Throws(IOException::class)
+        override fun convert(value: Location): String {
+            return "${value.longitude},${value.latitude}"
+        }
+    }
+
+    companion object {
+        fun create(): LocationConverterFactory {
+            return LocationConverterFactory()
+        }
     }
 }

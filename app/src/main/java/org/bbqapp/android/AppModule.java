@@ -30,8 +30,6 @@ import android.location.LocationManager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.kotlin.KotlinModule;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.jakewharton.picasso.OkHttp3Downloader;
 import com.squareup.leakcanary.LeakCanary;
 import com.squareup.leakcanary.RefWatcher;
@@ -55,7 +53,6 @@ import de.halfbit.tinybus.TinyBus;
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
-import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 import rx.Scheduler;
 import rx.android.schedulers.AndroidSchedulers;
@@ -130,42 +127,20 @@ public class AppModule {
 
     @Provides
     @Singleton
-    Gson provideGson() {
-        return new GsonBuilder().create();
-    }
-
-    @Provides
-    @Singleton
-    @Named("v1")
-    Retrofit provideRetrofit(OkHttpClient client, Gson gson) {
-        return new Retrofit.Builder()
-                .client(client)
-                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-                .addConverterFactory(PictureConverterFactory.create())
-                .addConverterFactory(IdConverterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create(gson))
-                .addConverterFactory(LocationConverterFactory.create())
-                .addConverterFactory(LatLngConverterFactory.create())
-                .baseUrl(BuildConfig.API_HOST)
-                .build();
-    }
-
-    @Provides
-    @Singleton
     ObjectMapper provideObjectMapper() {
         return new ObjectMapper().registerModule(new KotlinModule());
     }
 
     @Provides
     @Singleton
-    @Named("v2")
     Retrofit provideRetrofit2(OkHttpClient client, ObjectMapper objectMapper) {
         return new Retrofit.Builder()
                 .client(client)
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-                .addConverterFactory(org.bbqapp.android.api2.converter.PictureConverterFactory.Companion.create())
-                .addConverterFactory(org.bbqapp.android.api2.converter.IdConverterFactory.Companion.create())
-                .addConverterFactory(org.bbqapp.android.api2.converter.LocationConverterFactory.Companion.create())
+                .addConverterFactory(PictureConverterFactory.Companion.create())
+                .addConverterFactory(IdConverterFactory.Companion.create())
+                .addConverterFactory(LocationConverterFactory.Companion.create())
+                .addConverterFactory(LatLngConverterFactory.Companion.create())
                 .addConverterFactory(JacksonConverterFactory.create(objectMapper))
                 .baseUrl(BuildConfig.API_HOST)
                 .build();
@@ -173,14 +148,8 @@ public class AppModule {
 
     @Provides
     @Singleton
-    PlaceService providePlacesService(@Named("v1") Retrofit retrofit) {
-        return retrofit.create(PlaceService.class);
-    }
-
-    @Provides
-    @Singleton
-    org.bbqapp.android.api2.service.PlaceService providePlaceService(@Named("v2") Retrofit retrofit) {
-        return retrofit.create(org.bbqapp.android.api2.service.PlaceService.class);
+    PlaceService providePlaceService(Retrofit retrofit) {
+        return retrofit.create(org.bbqapp.android.api.service.PlaceService.class);
     }
 
     @Provides

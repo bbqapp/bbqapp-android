@@ -30,7 +30,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import org.bbqapp.android.R
-import org.bbqapp.android.api2.model.Place
+import org.bbqapp.android.api.model.Place
 import org.bbqapp.android.extension.getLatLng
 import org.bbqapp.android.util.AbstractListAdapter
 import org.bbqapp.android.util.DistanceFormatter

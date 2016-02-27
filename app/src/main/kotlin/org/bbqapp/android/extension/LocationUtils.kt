@@ -30,4 +30,4 @@ import com.google.android.gms.maps.model.LatLng
 
 fun Address.getLatLng() = LatLng(latitude, longitude)
 fun Location.getLatLng() = LatLng(latitude, longitude)
-fun org.bbqapp.android.api2.model.Location.getLatLng() = LatLng(coordinates[1], coordinates[0])
+fun org.bbqapp.android.api.model.Location.getLatLng() = LatLng(coordinates[1], coordinates[0])

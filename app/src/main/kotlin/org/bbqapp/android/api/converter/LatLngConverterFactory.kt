@@ -22,37 +22,33 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android.api.converter;
+package org.bbqapp.android.api.converter
 
-import android.location.Location;
+import com.google.android.gms.maps.model.LatLng
+import retrofit2.Converter
+import retrofit2.Retrofit
+import java.io.IOException
+import java.lang.reflect.Type
 
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
+class LatLngConverterFactory private constructor() : Converter.Factory() {
 
-import retrofit2.Converter;
-import retrofit2.Retrofit;
-
-public class LocationConverterFactory extends Converter.Factory {
-    public static LocationConverterFactory create() {
-        return new LocationConverterFactory();
-    }
-
-    private LocationConverterFactory() {
-    }
-
-    @Override
-    public Converter<?, String> stringConverter(Type type, Annotation[] annotations, Retrofit retrofit) {
-        if (type instanceof Class && ((Class<?>) type).isAssignableFrom(Location.class)) {
-            return new LocationConverter();
+    override fun stringConverter(type: Type?, annotations: Array<Annotation>?, retrofit: Retrofit?): Converter<*, String>? {
+        if (type is Class<*> && type.isAssignableFrom(LatLng::class.java)) {
+            return LocationConverter()
         }
-        return super.stringConverter(type, annotations, retrofit);
+        return super.stringConverter(type, annotations, retrofit)
     }
 
-    private class LocationConverter implements Converter<Location, String> {
-        @Override
-        public String convert(Location value) throws IOException {
-            return value.getLongitude() + "," + value.getLatitude();
+    private inner class LocationConverter : Converter<LatLng, String> {
+        @Throws(IOException::class)
+        override fun convert(value: LatLng): String {
+            return "${value.longitude},${value.latitude}"
+        }
+    }
+
+    companion object {
+        fun create(): LatLngConverterFactory {
+            return LatLngConverterFactory()
         }
     }
 }

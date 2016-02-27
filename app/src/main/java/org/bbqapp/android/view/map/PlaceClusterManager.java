@@ -45,7 +45,6 @@ import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 
 import org.bbqapp.android.R;
 import org.bbqapp.android.api.model.Place;
-import org.bbqapp.android.api.model.Point;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -120,7 +119,7 @@ class PlaceClusterManager {
         public void onCameraChange(CameraPosition cameraPosition) {
             super.onCameraChange(cameraPosition);
 
-            if(cameraChangeListener != null) {
+            if (cameraChangeListener != null) {
                 cameraChangeListener.onCameraChange(cameraPosition);
             }
         }
@@ -177,8 +176,7 @@ class PlaceClusterManager {
 
         @Override
         public LatLng getPosition() {
-            Point point = place.getLocation().toPoint();
-            return new LatLng(point.getLatitude(), point.getLongitude());
+            return new LatLng(place.getLocation().getCoordinates().get(1), place.getLocation().getCoordinates().get(0));
         }
 
         public Place getPlace() {

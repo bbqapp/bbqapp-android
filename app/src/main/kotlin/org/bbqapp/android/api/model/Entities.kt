@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android.api2.model
+package org.bbqapp.android.api.model
 
 import android.net.Uri
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -47,7 +47,7 @@ data class Location(
         val coordinates: List<Double>, val type: String) : Entity
 
 data class Comment(val comment: String,
-              val score: Int) : Entity
+                   val score: Int) : Entity
 
 data class Place(
         @JsonProperty("_id") override val id: String? = null,
@@ -62,18 +62,29 @@ data class PictureInfo(
         val meta: PictureMeta) : HasId
 
 data class PictureMeta(
-        val mimeType: String,
+        val mimeType: String?,
         val url: String) : Entity
 
-data class Picture(val input: InputStream, val length: Long = -1) {
-    constructor(file: File) : this(FileInputStream(file), file.length())
+data class Picture(val input: InputStream,
+                   val length: Long = -1,
+                   val progress: ((Long, Long) -> Unit)? = null) {
+    constructor(file: File,
+                progress: ((Long, Long) -> Unit)? = null
+    ) : this(FileInputStream(file), file.length(), progress)
 
-    constructor(uri: Uri) : this(File(uri.toString()))
+    @Throws(FileNotFoundException::class)
+    constructor(uri: Uri,
+                progress: ((Long, Long) -> Unit)? = null
+    ) : this(File(uri.toString()), progress)
 
     @Throws(IOException::class)
     fun out(out: OutputStream, progress: ((Long, Long) -> Unit)? = null): Long {
         try {
-            return input.copyTo(out, { t: Long -> progress?.let { progress(length, t) } })
+            val listener = fun(transferred: Long): Unit {
+                progress?.invoke(length, transferred)
+                this.progress?.invoke(length, transferred)
+            }
+            return input.copyTo(out, listener)
         } finally {
             try {
                 input.close()

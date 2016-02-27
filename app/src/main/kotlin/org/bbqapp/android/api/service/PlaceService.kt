@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android.api2.service
+package org.bbqapp.android.api.service
 
 import android.location.Location
 import com.google.android.gms.maps.model.LatLng
-import org.bbqapp.android.api2.model.*
+import org.bbqapp.android.api.model.*
 import retrofit2.http.*
 import rx.Observable
 
@@ -54,7 +54,7 @@ interface PlaceService {
     fun getPicture(@Path("placeId") placeId: String, @Path("imageId") imageId: String): Observable<Picture>
 
     @GET("/api/places/{placeId}/pictures/{imageId}")
-    fun getPicture(@Path("placeId") placeId: Id, @Path("imageId") imageId: Id): Observable<Picture>
+    fun getPicture(@Path("placeId") placeId: HasId, @Path("imageId") imageId: HasId): Observable<Picture>
 
     @GET("/api{pictureUrl}")
     fun getPicture(@Path(value = "pictureUrl", encoded = true) pictureUrl: String): Observable<Picture>
@@ -63,11 +63,11 @@ interface PlaceService {
     fun postPicture(@Path("placeId") placeId: String, @Body picture: Picture): Observable<Id>
 
     @POST("/api/places/{placeId}/pictures")
-    fun postPicture(@Path("placeId") placeId: Id, @Body picture: Picture): Observable<Id>
+    fun postPicture(@Path("placeId") placeId: HasId, @Body picture: Picture): Observable<Id>
 
     @GET("/api/places/{placeId}/pictures")
     fun getPicturesInfo(@Path("placeId") placeId: String): Observable<List<PictureInfo>>
 
     @GET("/api/places/{placeId}/pictures")
-    fun getPicturesInfo(@Path("placeId") placeId: Id): Observable<List<PictureInfo>>
+    fun getPicturesInfo(@Path("placeId") placeId: HasId): Observable<List<PictureInfo>>
 }
