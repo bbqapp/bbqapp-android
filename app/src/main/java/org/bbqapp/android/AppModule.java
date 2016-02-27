@@ -40,9 +40,9 @@ import org.bbqapp.android.api.converter.IdConverterFactory;
 import org.bbqapp.android.api.converter.LatLngConverterFactory;
 import org.bbqapp.android.api.converter.LocationConverterFactory;
 import org.bbqapp.android.api.converter.PictureConverterFactory;
+import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.api.service.PlaceService;
 import org.bbqapp.android.service.GeocodeService;
-import org.bbqapp.android.service.LocationService;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -83,7 +83,7 @@ public class AppModule {
 
     @Provides
     @Singleton
-    LocationService provideLocationService(LocationManager locationManager) {
+    LocationService provideLocationService2(LocationManager locationManager) {
         return new LocationService(locationManager);
     }
 

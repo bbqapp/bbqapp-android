@@ -51,8 +51,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.bbqapp.android.R;
-import org.bbqapp.android.service.GeocodeService;
 import org.bbqapp.android.service.LocationService;
+import org.bbqapp.android.service.GeocodeService;
 import org.bbqapp.android.view.BaseActivity;
 
 import java.util.concurrent.TimeUnit;

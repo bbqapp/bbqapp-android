@@ -53,7 +53,6 @@ dependencies {
     compile 'com.facebook.android:facebook-android-sdk:4.7.0'
     compile 'com.squareup.retrofit2:retrofit:2.0.0-beta4'
     compile 'com.squareup.retrofit2:adapter-rxjava:2.0.0-beta4'
-    compile 'com.squareup.retrofit2:converter-gson:2.0.0-beta4'
     compile 'com.squareup.retrofit2:converter-jackson:2.0.0-beta4'
     compile 'com.squareup.picasso:picasso:2.5.2'
     compile 'com.jakewharton.picasso:picasso2-okhttp3-downloader:1.0.2'
@@ -64,7 +63,6 @@ dependencies {
     compile 'io.reactivex:rxandroid:1.1.0'
     compile 'io.reactivex:rxjava:1.1.1'
     compile 'com.jakewharton.rxbinding:rxbinding:0.3.0'
-    compile 'com.google.code.gson:gson:2.6.1'
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.7.1-2"
     compile 'de.halfbit:tinybus:3.0.2'
     compile 'com.github.ksoichiro:android-observablescrollview:1.6.0'
@@ -86,4 +84,16 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'me.tatarka:gradle-retrolambda:3.2.5'
     }
+}
+
+def getCheckedOutGitCommitHash(int hashLength = 12) {
+    def gitFolder = "$projectDir.parent/.git/"
+
+    def head = new File(gitFolder + "HEAD").text.split(":")
+    def isCommit = head.length == 1
+
+    if(isCommit) return head[0].trim().take(hashLength)
+
+    def refHead = new File(gitFolder + head[1].trim())
+    refHead.text.trim().take hashLength
 }

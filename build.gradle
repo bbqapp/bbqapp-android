@@ -19,15 +19,3 @@ allprojects {
         mavenCentral()
     }
 }
-
-def getCheckedOutGitCommitHash(int hashLength = 12) {
-    def gitFolder = "$projectDir/.git/"
-
-    def head = new File(gitFolder + "HEAD").text.split(":")
-    def isCommit = head.length == 1
-
-    if(isCommit) return head[0].trim().take(hashLength)
-
-    def refHead = new File(gitFolder + head[1].trim())
-    refHead.text.trim().take hashLength
-}

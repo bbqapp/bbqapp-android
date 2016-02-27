@@ -45,16 +45,15 @@ import android.widget.Toast;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
-import com.annimon.stream.function.Function;
 import com.squareup.picasso.Picasso;
 
 import org.bbqapp.android.R;
 import org.bbqapp.android.api.model.Id;
 import org.bbqapp.android.api.model.Picture;
 import org.bbqapp.android.api.model.Place;
+import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.api.service.PlaceService;
 import org.bbqapp.android.service.GeocodeService;
-import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.view.BaseFragment;
 
 import java.io.File;
