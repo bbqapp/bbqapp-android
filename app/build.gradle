@@ -1,6 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'me.tatarka.retrolambda'
+apply plugin: 'kotlin-android-extensions'
 
 android {
     signingConfigs {
@@ -25,10 +25,6 @@ android {
             buildConfigField 'String', 'API_HOST', '"http://bbqapp.org"'
             buildConfigField 'String', 'API_URL', 'API_HOST + "/api/"'
         }
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
     }
     dexOptions {
         javaMaxHeapSize "2g"
@@ -62,7 +58,12 @@ dependencies {
     compile 'com.jakewharton:butterknife:7.0.1'
     compile 'io.reactivex:rxandroid:1.1.0'
     compile 'io.reactivex:rxjava:1.1.1'
-    compile 'com.jakewharton.rxbinding:rxbinding:0.3.0'
+    compile 'io.reactivex:rxkotlin:0.40.1'
+    compile 'com.jakewharton.rxbinding:rxbinding-kotlin:0.4.0'
+    compile 'com.jakewharton.rxbinding:rxbinding-appcompat-v7-kotlin:0.4.0'
+    compile 'com.jakewharton.rxbinding:rxbinding-support-v4-kotlin:0.4.0'
+    compile 'com.trello:rxlifecycle-components:0.5.0'
+    compile 'com.trello:rxlifecycle-kotlin:0.5.0'
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.7.1-2"
     compile 'de.halfbit:tinybus:3.0.2'
     compile 'com.github.ksoichiro:android-observablescrollview:1.6.0'
@@ -82,7 +83,6 @@ buildscript {
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'me.tatarka:gradle-retrolambda:3.2.5'
     }
 }
 

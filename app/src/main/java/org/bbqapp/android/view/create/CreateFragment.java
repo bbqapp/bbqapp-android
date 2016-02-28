@@ -45,6 +45,7 @@ import android.widget.Toast;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
+import com.annimon.stream.function.Function;
 import com.squareup.picasso.Picasso;
 
 import org.bbqapp.android.R;
@@ -275,8 +276,12 @@ public class CreateFragment extends BaseFragment {
     protected void create() {
         String coordinatesString = locationEditText.getText().toString();
         List<Double> coordinates = Stream.of(coordinatesString.split(","))
-                .map(value -> Double.valueOf(value.trim()))
-                .collect(Collectors.toList());
+                .map(new Function<String, Double>() {
+                    @Override
+                    public Double apply(String value) {
+                        return Double.valueOf(value.trim());
+                    }
+                }).collect(Collectors.<Double>toList());
 
         final Place place = new Place(null, null, null, new org.bbqapp.android.api.model.Location(coordinates, "Point"), null);
 

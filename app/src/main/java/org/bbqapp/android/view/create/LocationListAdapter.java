@@ -51,9 +51,8 @@ public class LocationListAdapter extends AbstractListAdapter<Parcelable> {
     }
 
     public void setLocations(List<Parcelable> locations) {
-        if (locations == null) {
-            this.locations.clear();
-        } else {
+        this.locations.clear();
+        if (locations != null) {
             this.locations.addAll(locations);
         }
 

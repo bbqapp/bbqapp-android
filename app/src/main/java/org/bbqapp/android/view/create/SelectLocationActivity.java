@@ -34,6 +34,9 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 
@@ -71,6 +74,7 @@ import timber.log.Timber;
 public class SelectLocationActivity extends BaseActivity implements OnMapReadyCallback, LocationSource, ObservableScrollViewCallbacks {
 
     private static final int GEOCODER_MAX_RESULTS = 5;
+    private static final int SEARCH_ADDRESS_REQUEST_CODE = 915;
 
     @Bind(R.id.addresses)
     ObservableListView addresses;
@@ -130,8 +134,7 @@ public class SelectLocationActivity extends BaseActivity implements OnMapReadyCa
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Parcelable address = locationListAdapter.getItem(position);
                 Intent data = new Intent();
-                data.putExtras(new Bundle());
-                data.getExtras().putParcelable("address", address);
+                data.putExtra("address", address);
                 setResult(Activity.RESULT_OK, new Intent());
                 finish();
             }
@@ -175,14 +178,31 @@ public class SelectLocationActivity extends BaseActivity implements OnMapReadyCa
                     }
                 })
                 .timeout(10, TimeUnit.SECONDS, Observable.<Location>just(null))
-                .filter(location -> location != null)
+                .filter(new Func1<Location, Boolean>() {
+                    @Override
+                    public Boolean call(Location location) {
+                        return location != null;
+                    }
+                })
                 .subscribeOn(ioScheduler)
                 .unsubscribeOn(ioScheduler)
                 .observeOn(mainScheduler)
-                .subscribe(
-                        this::updateLocation,
-                        e -> Timber.w(e, "Location stream was completed unexpectedly"),
-                        () -> Timber.w("Location stream was completed unexpectedly")
+                .subscribe(new Subscriber<Location>() {
+                               @Override
+                               public void onCompleted() {
+                               }
+
+                               @Override
+                               public void onError(Throwable e) {
+                                   Timber.w(e, "Location stream was completed unexpectedly");
+                               }
+
+                               @Override
+                               public void onNext(Location location) {
+                                   updateLocation(location);
+                               }
+                           }
+
                 );
     }
 
@@ -200,13 +220,34 @@ public class SelectLocationActivity extends BaseActivity implements OnMapReadyCa
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_select_location_activity, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.search_address) {
+            Intent intent = SearchAddressActivity.Companion.createIntent(this);
+            startActivityForResult(intent, SEARCH_ADDRESS_REQUEST_CODE);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public void onMapReady(final GoogleMap googleMap) {
         this.googleMap = googleMap;
 
         googleMap.setLocationSource(this);
         googleMap.setMyLocationEnabled(true);
 
-        googleMap.setOnMapClickListener(this::setMarker);
+        googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                setMarker(latLng);
+            }
+        });
 
         googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
             private void addTempLocationInList(Marker marker) {
@@ -230,9 +271,12 @@ public class SelectLocationActivity extends BaseActivity implements OnMapReadyCa
             }
         });
 
-        googleMap.setOnMyLocationButtonClickListener(() -> {
-            setMarker(toLatLng(currentLocation));
-            return false;
+        googleMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
+            @Override
+            public boolean onMyLocationButtonClick() {
+                setMarker(toLatLng(currentLocation));
+                return false;
+            }
         });
     }
 
@@ -342,10 +386,6 @@ public class SelectLocationActivity extends BaseActivity implements OnMapReadyCa
 
     private static LatLng toLatLng(Location location) {
         return new LatLng(location.getLatitude(), location.getLongitude());
-    }
-
-    private static LatLng toLatLng(Address address) {
-        return new LatLng(address.getLatitude(), address.getLongitude());
     }
 
     @Override

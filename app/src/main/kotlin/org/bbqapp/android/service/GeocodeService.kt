@@ -44,7 +44,7 @@ class GeocodeService(private val context: Context) {
     fun resolve(position: LatLng, maxResults: Int) = resolve(maxResults, { geocode(position, maxResults) })
 
     fun resolve(location: String) = resolve(location, DEFAULT_MAX_RESULTS)
-    fun resolve(location: String, maxResults: Int) = resolve(maxResults, { geocode(location, maxResults) })
+    fun resolve(location: CharSequence, maxResults: Int) = resolve(maxResults, { geocode(location, maxResults) })
 
     private fun resolve(maxResults: Int, geocodeFun: () -> List<Address>): Observable<Address> {
         val subject = ReplaySubject.createWithSize<Address>(maxResults)
@@ -62,8 +62,8 @@ class GeocodeService(private val context: Context) {
     private fun createGeocoder() = Geocoder(context)
 
     @Throws(IOException::class)
-    private fun geocode(location: String, maxResults: Int)
-            = createGeocoder().getFromLocationName(location, maxResults)
+    private fun geocode(location: CharSequence, maxResults: Int)
+            = createGeocoder().getFromLocationName(location.toString(), maxResults)
 
     @Throws(IOException::class)
     private fun geocode(location: LatLng, maxResults: Int)

@@ -83,7 +83,7 @@ public class AppModule {
 
     @Provides
     @Singleton
-    LocationService provideLocationService2(LocationManager locationManager) {
+    LocationService provideLocationService(LocationManager locationManager) {
         return new LocationService(locationManager);
     }
 
