@@ -36,39 +36,21 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
-
+import android.widget.*;
+import butterknife.Bind;
+import butterknife.OnClick;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.annimon.stream.function.Function;
 import com.squareup.picasso.Picasso;
-
 import org.bbqapp.android.R;
 import org.bbqapp.android.api.model.Id;
 import org.bbqapp.android.api.model.Picture;
 import org.bbqapp.android.api.model.Place;
-import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.api.service.PlaceService;
 import org.bbqapp.android.service.GeocodeService;
+import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.view.BaseFragment;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-
-import butterknife.Bind;
-import butterknife.OnClick;
 import rx.Observable;
 import rx.Scheduler;
 import rx.Subscriber;
@@ -76,6 +58,15 @@ import rx.Subscription;
 import rx.functions.Action1;
 import rx.functions.Func1;
 import timber.log.Timber;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Fragment to create new places
@@ -154,18 +145,25 @@ public class CreateFragment extends BaseFragment {
                     }
                 })
                 .observeOn(ioScheduler)
-                .flatMap(new Func1<Location, Observable<Address>>() {
+                .flatMap(new Func1<Location, Observable<List<Address>>>() {
                     @Override
-                    public Observable<Address> call(final Location location) {
-                        return geocodeService.resolve(location);
+                    public Observable<List<Address>> call(final Location location) {
+                        return geocodeService.resolve(location, 1);
                     }
                 })
                 .subscribeOn(ioScheduler)
                 .unsubscribeOn(ioScheduler)
                 .observeOn(mainScheduler)
-                .subscribe(new Action1<Address>() {
+                .filter(new Func1<List<Address>, Boolean>() {
                     @Override
-                    public void call(Address address) {
+                    public Boolean call(List<Address> addresses) {
+                        return addresses != null && !addresses.isEmpty();
+                    }
+                })
+                .subscribe(new Action1<List<Address>>() {
+                    @Override
+                    public void call(List<Address> addresses) {
+                        Address address = addresses.get(0);
                         StringBuilder sb = new StringBuilder();
                         for (int i = 0; i < address.getMaxAddressLineIndex(); i++) {
                             sb.append(address.getAddressLine(i));

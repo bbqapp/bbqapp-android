@@ -38,37 +38,30 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-
+import butterknife.Bind;
 import com.github.ksoichiro.android.observablescrollview.ObservableListView;
 import com.github.ksoichiro.android.observablescrollview.ObservableScrollViewCallbacks;
 import com.github.ksoichiro.android.observablescrollview.ScrollState;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.LocationSource;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.*;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
 import org.bbqapp.android.R;
-import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.service.GeocodeService;
+import org.bbqapp.android.service.LocationService;
 import org.bbqapp.android.view.BaseActivity;
-
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-
-import butterknife.Bind;
 import rx.Observable;
 import rx.Scheduler;
 import rx.Subscriber;
 import rx.Subscription;
 import rx.functions.Func1;
 import timber.log.Timber;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class SelectLocationActivity extends BaseActivity implements OnMapReadyCallback, LocationSource, ObservableScrollViewCallbacks {
 
@@ -356,7 +349,7 @@ public class SelectLocationActivity extends BaseActivity implements OnMapReadyCa
                 .subscribeOn(ioScheduler)
                 .unsubscribeOn(ioScheduler)
                 .observeOn(mainScheduler)
-                .subscribe(new Subscriber<Address>() {
+                .subscribe(new Subscriber<List<Address>>() {
                     @Override
                     public void onCompleted() {
                     }
@@ -367,9 +360,8 @@ public class SelectLocationActivity extends BaseActivity implements OnMapReadyCa
                     }
 
                     @Override
-                    public void onNext(Address address) {
-                        Timber.i("received resolved address %s", address.toString());
-                        locationListAdapter.add(address);
+                    public void onNext(List<Address> addresses) {
+                        locationListAdapter.setLocations(addresses);
                     }
                 });
     }

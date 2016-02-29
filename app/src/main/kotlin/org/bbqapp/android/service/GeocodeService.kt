@@ -25,47 +25,19 @@
 package org.bbqapp.android.service
 
 import android.content.Context
-import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import com.google.android.gms.maps.model.LatLng
 import org.bbqapp.android.extension.getLatLng
 import rx.Observable
-import rx.subjects.ReplaySubject
-import java.io.IOException
+
+fun Geocoder.resolve(text: String, maxResults: Int) = Observable.fromCallable { getFromLocationName(text, maxResults) }
+fun Geocoder.resolve(lat: Double, long: Double,  maxResults: Int) = Observable.fromCallable { getFromLocation(lat, long, maxResults) }
+fun Geocoder.resolve(latLng: LatLng,  maxResults: Int) = resolve(latLng.latitude, latLng.longitude, maxResults)
+fun Geocoder.resolve(location: Location,  maxResults: Int) = resolve(location.getLatLng(), maxResults)
 
 class GeocodeService(private val context: Context) {
-    private val DEFAULT_MAX_RESULTS = 1
-
-    fun resolve(location: Location) = resolve(location, DEFAULT_MAX_RESULTS)
-    fun resolve(location: Location, maxResults: Int) = resolve(location.getLatLng(), maxResults)
-
-    fun resolve(position: LatLng) = resolve(position, DEFAULT_MAX_RESULTS)
-    fun resolve(position: LatLng, maxResults: Int) = resolve(maxResults, { geocode(position, maxResults) })
-
-    fun resolve(location: String) = resolve(location, DEFAULT_MAX_RESULTS)
-    fun resolve(location: CharSequence, maxResults: Int) = resolve(maxResults, { geocode(location, maxResults) })
-
-    private fun resolve(maxResults: Int, geocodeFun: () -> List<Address>): Observable<Address> {
-        val subject = ReplaySubject.createWithSize<Address>(maxResults)
-
-        try {
-            geocodeFun().forEach { subject.onNext(it) }
-            subject.onCompleted()
-        } catch (e: IOException) {
-            subject.onError(e)
-        }
-
-        return subject
-    }
-
-    private fun createGeocoder() = Geocoder(context)
-
-    @Throws(IOException::class)
-    private fun geocode(location: CharSequence, maxResults: Int)
-            = createGeocoder().getFromLocationName(location.toString(), maxResults)
-
-    @Throws(IOException::class)
-    private fun geocode(location: LatLng, maxResults: Int)
-            = createGeocoder().getFromLocation(location.latitude, location.longitude, maxResults)
+    fun resolve(location: Location, maxResults: Int) = Geocoder(context).resolve(location, maxResults)
+    fun resolve(position: LatLng, maxResults: Int) = Geocoder(context).resolve(position, maxResults)
+    fun resolve(location: String, maxResults: Int) = Geocoder(context).resolve(location, maxResults)
 }

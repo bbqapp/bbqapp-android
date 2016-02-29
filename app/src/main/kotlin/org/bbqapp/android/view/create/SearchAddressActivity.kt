@@ -26,29 +26,24 @@ package org.bbqapp.android.view.create
 
 import android.content.Context
 import android.content.Intent
-import kotlinx.android.synthetic.main.activity_search_address.*
-
+import android.location.Geocoder
 import android.os.Bundle
-import android.os.Parcelable
+import android.widget.Toast
 import com.jakewharton.rxbinding.support.v7.widget.navigationClicks
 import com.jakewharton.rxbinding.widget.itemClicks
 import com.jakewharton.rxbinding.widget.textChanges
 import com.trello.rxlifecycle.components.support.RxAppCompatActivity
 import com.trello.rxlifecycle.kotlin.bindToLifecycle
+import kotlinx.android.synthetic.main.activity_search_address.*
 import org.bbqapp.android.R
-import org.bbqapp.android.service.GeocodeService
-import rx.Subscription
+import org.bbqapp.android.service.resolve
 import rx.android.schedulers.AndroidSchedulers
-import rx.schedulers.Schedulers
+import rx.internal.operators.OperatorSwitch
 import java.util.concurrent.TimeUnit
 
 class SearchAddressActivity : RxAppCompatActivity() {
 
     val adapter = LocationListAdapter()
-
-    var resolveSubscription: Subscription? = null
-
-    val geocoder = GeocodeService(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,25 +68,15 @@ class SearchAddressActivity : RxAppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-
         search.textChanges()
-                .doOnNext { if (it.length <= 1) adapter.clear() }
-                .filter { it.length > 1 }
                 .debounce(250, TimeUnit.MILLISECONDS)
-                .bindToLifecycle(this)
-                .subscribe { resolve(it) }
-    }
-
-    private fun resolve(text: CharSequence) {
-        resolveSubscription?.unsubscribe()
-
-        resolveSubscription = geocoder.resolve(text, 10)
-                .buffer(10)
-                .subscribeOn(Schedulers.io())
-                .unsubscribeOn(Schedulers.io())
+                .map { Geocoder(this).resolve(it.toString(), 10) }
+                .lift(OperatorSwitch.instance())
                 .observeOn(AndroidSchedulers.mainThread())
+                .doOnError { Toast.makeText(this, R.string.resolve_error, Toast.LENGTH_LONG).show() }
+                .retry()
                 .bindToLifecycle(this)
-                .subscribe({ adapter.setLocations(it as List<Parcelable>) })
+                .subscribe { adapter.setLocations(it) }
     }
 
     companion object {
