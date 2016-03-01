@@ -79,7 +79,7 @@ class LocationService(private val locationManager: LocationManager) {
         try {
             return locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER)
         } catch (e: IllegalArgumentException) {
-            Timber.e(e, "Could not get last known exception of provider %s", provider)
+            Timber.e(e, "Could not get last known exception of provider $provider")
             return null
         }
 

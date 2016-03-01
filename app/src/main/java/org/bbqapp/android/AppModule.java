@@ -25,38 +25,20 @@
 package org.bbqapp.android;
 
 import android.app.Application;
-import android.content.Context;
-import android.location.LocationManager;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.module.kotlin.KotlinModule;
-import com.jakewharton.picasso.OkHttp3Downloader;
-import com.squareup.leakcanary.LeakCanary;
 import com.squareup.leakcanary.RefWatcher;
 import com.squareup.picasso.Picasso;
-
-import org.bbqapp.android.api.PicassoPictureRequestTransformer;
-import org.bbqapp.android.api.converter.IdConverterFactory;
-import org.bbqapp.android.api.converter.LatLngConverterFactory;
-import org.bbqapp.android.api.converter.LocationConverterFactory;
-import org.bbqapp.android.api.converter.PictureConverterFactory;
-import org.bbqapp.android.service.LocationService;
-import org.bbqapp.android.api.service.PlaceService;
-import org.bbqapp.android.service.GeocodeService;
-
-import javax.inject.Named;
-import javax.inject.Singleton;
-
 import dagger.Module;
 import dagger.Provides;
 import de.halfbit.tinybus.TinyBus;
-import okhttp3.OkHttpClient;
-import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
-import retrofit2.converter.jackson.JacksonConverterFactory;
+import org.bbqapp.android.api.service.PlaceService;
+import org.bbqapp.android.service.GeocodeService;
+import org.bbqapp.android.service.LocationService;
 import rx.Scheduler;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
+
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 /**
  * Application module to hold global states
@@ -77,14 +59,8 @@ public class AppModule {
 
     @Provides
     @Singleton
-    LocationManager provideLocationManager(Application context) {
-        return (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-    }
-
-    @Provides
-    @Singleton
-    LocationService provideLocationService(LocationManager locationManager) {
-        return new LocationService(locationManager);
+    LocationService provideLocationService() {
+        return app.getKodein().getJava().instance(LocationService.class);
     }
 
     @Provides
@@ -96,11 +72,7 @@ public class AppModule {
     @Provides
     @Singleton
     RefWatcher provideRefWatcher(Application application) {
-        if (BuildConfig.DEBUG) {
-            return RefWatcher.DISABLED;
-        } else {
-            return LeakCanary.install(application);
-        }
+        return app.getKodein().getJava().instance(RefWatcher.class);
     }
 
     @Provides
@@ -111,45 +83,14 @@ public class AppModule {
 
     @Provides
     @Singleton
-    OkHttpClient provideOkHttpClient() {
-        return new OkHttpClient.Builder()
-                .build();
+    Picasso providePicasso(Application application) {
+        return app.getKodein().getJava().instance(Picasso.class);
     }
 
     @Provides
     @Singleton
-    Picasso providePicasso(Application context, OkHttpClient client) {
-        return new Picasso.Builder(context)
-                .downloader(new OkHttp3Downloader(client))
-                .requestTransformer(new PicassoPictureRequestTransformer(BuildConfig.API_URL))
-                .build();
-    }
-
-    @Provides
-    @Singleton
-    ObjectMapper provideObjectMapper() {
-        return new ObjectMapper().registerModule(new KotlinModule());
-    }
-
-    @Provides
-    @Singleton
-    Retrofit provideRetrofit2(OkHttpClient client, ObjectMapper objectMapper) {
-        return new Retrofit.Builder()
-                .client(client)
-                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-                .addConverterFactory(PictureConverterFactory.Companion.create())
-                .addConverterFactory(IdConverterFactory.Companion.create())
-                .addConverterFactory(LocationConverterFactory.Companion.create())
-                .addConverterFactory(LatLngConverterFactory.Companion.create())
-                .addConverterFactory(JacksonConverterFactory.create(objectMapper))
-                .baseUrl(BuildConfig.API_HOST)
-                .build();
-    }
-
-    @Provides
-    @Singleton
-    PlaceService providePlaceService(Retrofit retrofit) {
-        return retrofit.create(org.bbqapp.android.api.service.PlaceService.class);
+    PlaceService providePlaceService(Application application) {
+        return app.getKodein().getJava().instance(PlaceService.class);
     }
 
     @Provides

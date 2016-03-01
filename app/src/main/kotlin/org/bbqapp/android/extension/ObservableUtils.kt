@@ -22,37 +22,17 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android;
+package org.bbqapp.android.extension
 
-import dagger.ObjectGraph;
-import timber.log.Timber;
+import rx.Observable
+import rx.android.schedulers.AndroidSchedulers
+import rx.schedulers.Schedulers
 
-/**
- * Application to maintain global states
- */
-public class App extends App2 implements Injector {
-    public ObjectGraph objectGraph;
+fun <T> Observable<T>.observeOnMainThread() = this.observeOn(AndroidSchedulers.mainThread())
+fun <T> Observable<T>.observeOnIoThread() = this.observeOn(Schedulers.io())
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
+fun <T> Observable<T>.subscribeOnMainThread() = this.subscribeOn(AndroidSchedulers.mainThread())
+fun <T> Observable<T>.subscribeOnIoThread() = this.subscribeOn(Schedulers.io())
 
-        if (BuildConfig.DEBUG) {
-            Timber.plant(new Timber.DebugTree());
-        }
-
-        // dagger
-        AppModule module = new AppModule(this);
-        objectGraph = ObjectGraph.create(module);
-    }
-
-    @Override
-    public ObjectGraph getObjectGraph() {
-        return objectGraph;
-    }
-
-    @Override
-    public void inject(Object o) {
-        objectGraph.inject(o);
-    }
-}
+fun <T> Observable<T>.unsubscribeOnMainThread() = this.unsubscribeOn(AndroidSchedulers.mainThread())
+fun <T> Observable<T>.unsubscribeOnIoThread() = this.unsubscribeOn(Schedulers.io())

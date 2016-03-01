@@ -36,8 +36,8 @@ import com.trello.rxlifecycle.components.support.RxAppCompatActivity
 import com.trello.rxlifecycle.kotlin.bindToLifecycle
 import kotlinx.android.synthetic.main.activity_search_address.*
 import org.bbqapp.android.R
+import org.bbqapp.android.extension.observeOnMainThread
 import org.bbqapp.android.service.resolve
-import rx.android.schedulers.AndroidSchedulers
 import rx.internal.operators.OperatorSwitch
 import java.util.concurrent.TimeUnit
 
@@ -72,7 +72,7 @@ class SearchAddressActivity : RxAppCompatActivity() {
                 .debounce(250, TimeUnit.MILLISECONDS)
                 .map { Geocoder(this).resolve(it.toString(), 10) }
                 .lift(OperatorSwitch.instance())
-                .observeOn(AndroidSchedulers.mainThread())
+                .observeOnMainThread()
                 .doOnError { Toast.makeText(this, R.string.resolve_error, Toast.LENGTH_LONG).show() }
                 .retry()
                 .bindToLifecycle(this)
