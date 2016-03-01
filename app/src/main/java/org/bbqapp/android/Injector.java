@@ -26,6 +26,7 @@ package org.bbqapp.android;
 
 import dagger.ObjectGraph;
 
+@Deprecated
 public interface Injector {
     ObjectGraph getObjectGraph();
 

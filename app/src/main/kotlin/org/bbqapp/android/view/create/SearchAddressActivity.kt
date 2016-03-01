@@ -32,16 +32,16 @@ import android.widget.Toast
 import com.jakewharton.rxbinding.support.v7.widget.navigationClicks
 import com.jakewharton.rxbinding.widget.itemClicks
 import com.jakewharton.rxbinding.widget.textChanges
-import com.trello.rxlifecycle.components.support.RxAppCompatActivity
 import com.trello.rxlifecycle.kotlin.bindToLifecycle
 import kotlinx.android.synthetic.main.activity_search_address.*
 import org.bbqapp.android.R
 import org.bbqapp.android.extension.observeOnMainThread
 import org.bbqapp.android.service.resolve
+import org.bbqapp.android.view.BaseActivity
 import rx.internal.operators.OperatorSwitch
 import java.util.concurrent.TimeUnit
 
-class SearchAddressActivity : RxAppCompatActivity() {
+class SearchAddressActivity : BaseActivity() {
 
     val adapter = LocationListAdapter()
 
