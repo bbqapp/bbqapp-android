@@ -47,8 +47,8 @@ class LocationListAdapter : AbstractListAdapter<Parcelable>() {
 
         textView.text = when (item) {
             is Address -> toString(item)
-            is LatLng -> item.toString()
-            is Location -> item.toString()
+            is LatLng ->  parent.resources.getString(R.string.set_position, item.latitude, item.longitude)
+            is Location -> parent.resources.getString(R.string.current_position, item.accuracy.toLong())
             else -> item.toString()
         }
         return textView

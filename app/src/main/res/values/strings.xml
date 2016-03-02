@@ -47,4 +47,6 @@
     <string name="search">Search</string>
     <string name="find_address">Find Address</string>
     <string name="resolve_error">Could not find address. Try again later.</string>
+    <string name="current_position">Current position\nAccurate to %s meters</string>
+    <string name="set_position">Set position\n%1$s, %2$s</string>
 </resources>

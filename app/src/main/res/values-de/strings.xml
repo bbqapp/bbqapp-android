@@ -43,4 +43,9 @@
     <string name="address">Adresse</string>
     <string name="take_picture">Bild aufnehmen</string>
     <string name="location">Position</string>
+    <string name="current_position">Aktuelle Position\nGenau auf %s Meter</string>
+    <string name="find_address">Adresse finden</string>
+    <string name="resolve_error"></string>
+    <string name="search">Suchen</string>
+    <string name="set_position">Gesetze Position\n%1$s, %2$s</string>
 </resources>
