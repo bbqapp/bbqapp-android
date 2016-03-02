@@ -26,10 +26,12 @@ package org.bbqapp.android.view.create
 
 import android.content.Context
 import android.location.Address
+import android.location.Location
 import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.android.synthetic.main.location_view.view.*
 import org.bbqapp.android.R
 import org.bbqapp.android.util.AbstractListAdapter
@@ -45,6 +47,8 @@ class LocationListAdapter : AbstractListAdapter<Parcelable>() {
 
         textView.text = when (item) {
             is Address -> toString(item)
+            is LatLng -> item.toString()
+            is Location -> item.toString()
             else -> item.toString()
         }
         return textView

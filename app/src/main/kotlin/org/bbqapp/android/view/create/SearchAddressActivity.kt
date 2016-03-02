@@ -26,6 +26,7 @@ package org.bbqapp.android.view.create
 
 import android.content.Context
 import android.content.Intent
+import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
 import android.widget.Toast
@@ -43,7 +44,7 @@ import java.util.concurrent.TimeUnit
 
 class SearchAddressActivity : BaseActivity() {
 
-    val adapter = LocationListAdapter()
+    lateinit var adapter: LocationListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,13 +56,14 @@ class SearchAddressActivity : BaseActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         toolbar.navigationClicks().bindToLifecycle(this).subscribe { onBackPressed() }
 
+        intent?.getStringExtra("search")?.let {
+            search.setText(it)
+        }
+
+        adapter = LocationListAdapter()
         suggestions.adapter = adapter;
         suggestions.itemClicks().bindToLifecycle(this).subscribe {
-            val address = adapter.getItem(it)
-            val intent = Intent()
-            intent.putExtra("address", address)
-            setResult(RESULT_OK, intent)
-            finish()
+            finish(adapter.getItem(it) as Address)
         }
     }
 
@@ -79,9 +81,22 @@ class SearchAddressActivity : BaseActivity() {
                 .subscribe { adapter.set(it) }
     }
 
+    private fun finish(address: Address) {
+        val intent = Intent()
+        intent.putExtra("address", address)
+        setResult(RESULT_OK, intent)
+        finish()
+    }
+
     companion object {
         fun createIntent(context: Context): Intent {
             return Intent(context, SearchAddressActivity::class.java);
+        }
+
+        fun createIntent(context: Context, search: String): Intent {
+            val intent = createIntent(context)
+            intent.putExtra("search", search)
+            return intent
         }
     }
 }

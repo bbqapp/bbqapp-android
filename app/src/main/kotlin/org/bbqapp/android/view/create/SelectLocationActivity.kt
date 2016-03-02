@@ -28,6 +28,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
@@ -64,7 +65,7 @@ class SelectLocationActivity : BaseActivity(), OnMapReadyCallback, LocationSourc
     private var marker: Marker? = null
     private var onLocationChangedListener: LocationSource.OnLocationChangedListener? = null
     private var resolveSubscription: Subscription? = null
-    private var locationListAdapter: LocationListAdapter? = null
+    private lateinit var locationListAdapter: LocationListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,11 +84,7 @@ class SelectLocationActivity : BaseActivity(), OnMapReadyCallback, LocationSourc
         locationListAdapter = LocationListAdapter()
         addresses.adapter = locationListAdapter
         addresses.setOnItemClickListener { parent, view, position, id ->
-            val address = locationListAdapter!!.getItem(position)
-            val data = Intent()
-            data.putExtra("address", address)
-            setResult(Activity.RESULT_OK, Intent())
-            finish()
+            finish(locationListAdapter.getItem(position) as Address)
         }
 
         addresses.setScrollViewCallbacks(this)
@@ -153,7 +150,7 @@ class SelectLocationActivity : BaseActivity(), OnMapReadyCallback, LocationSourc
         googleMap.setOnMarkerDragListener(object : GoogleMap.OnMarkerDragListener {
             private fun addTempLocationInList(marker: Marker) {
                 resolveSubscription?.unsubscribe()
-                locationListAdapter?.set(marker.position)
+                locationListAdapter.set(marker.position)
             }
 
             override fun onMarkerDragStart(marker: Marker) {
@@ -170,11 +167,10 @@ class SelectLocationActivity : BaseActivity(), OnMapReadyCallback, LocationSourc
             }
         })
 
-        googleMap.setOnMyLocationButtonClickListener({
-            val position = currentLocation?.getLatLng()
-            position?.let { setMarker(it) }
+        googleMap.setOnMyLocationButtonClickListener {
+            currentLocation?.getLatLng()?.let { setMarker(it) }
             false
-        })
+        }
     }
 
     private fun setMarker(position: LatLng, force: Boolean = false) {
@@ -224,8 +220,7 @@ class SelectLocationActivity : BaseActivity(), OnMapReadyCallback, LocationSourc
     }
 
     private fun zoomIn(location: Location) {
-        val latLng = LatLng(location.latitude, location.longitude)
-        zoomIn(latLng)
+        zoomIn(location.getLatLng())
     }
 
     private fun zoomIn(latLng: LatLng) {
@@ -239,15 +234,34 @@ class SelectLocationActivity : BaseActivity(), OnMapReadyCallback, LocationSourc
             return
         }
 
-        locationListAdapter?.set(if (marker?.position == currentLocation?.getLatLng()) currentLocation!! else marker!!.position)
+        locationListAdapter.set(if (marker?.position == currentLocation?.getLatLng()) currentLocation!! else marker!!.position)
 
         resolveSubscription = Geocoder(this).
                 resolve(marker!!.position, GEOCODER_MAX_RESULTS).
                 observeOnMainThread().
                 bindToLifecycle(this).
                 subscribe(
-                        { locationListAdapter?.add(it) },
+                        { locationListAdapter.add(it) },
                         { Timber.e(it, "Could not resolve addresses") })
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == SEARCH_ADDRESS_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                data?.extras?.getParcelable<Address>("address")?.let {
+                    finish(it)
+                }
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data)
+        }
+    }
+
+    private fun finish(address: Address) {
+        val data = Intent()
+        data.putExtra("address", address)
+        setResult(Activity.RESULT_OK, Intent())
+        finish()
     }
 
     override fun onScrollChanged(scrollY: Int, firstScroll: Boolean, dragging: Boolean) {
