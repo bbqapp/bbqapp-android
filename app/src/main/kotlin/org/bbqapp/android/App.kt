@@ -36,6 +36,7 @@ import com.jakewharton.picasso.OkHttp3Downloader
 import com.squareup.leakcanary.LeakCanary
 import com.squareup.leakcanary.RefWatcher
 import com.squareup.picasso.Picasso
+import dagger.ObjectGraph
 import okhttp3.OkHttpClient
 import org.bbqapp.android.api.PicassoPictureRequestTransformer
 import org.bbqapp.android.api.converter.IdConverterFactory
@@ -47,15 +48,17 @@ import org.bbqapp.android.service.LocationService
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory
 import retrofit2.converter.jackson.JacksonConverterFactory
+import timber.log.Timber
 
-open class App2 : Application(), KodeinApplication {
+open class App : Application(), KodeinApplication, Injector {
+
     override val kodein = Kodein {
 
         bind<RefWatcher>() with singleton {
             if (BuildConfig.DEBUG) {
                 RefWatcher.DISABLED
             } else {
-                LeakCanary.install(this@App2)
+                LeakCanary.install(this@App)
             }
         }
 
@@ -83,10 +86,29 @@ open class App2 : Application(), KodeinApplication {
         bind<PlaceService>() with singleton { instance<Retrofit>().create(PlaceService::class.java) }
 
         bind<Picasso>() with singleton {
-            Picasso.Builder(this@App2).
+            Picasso.Builder(this@App).
                     downloader(OkHttp3Downloader(instance<OkHttpClient>())).
                     requestTransformer(PicassoPictureRequestTransformer(BuildConfig.API_URL)).
                     build();
         }
+    }
+
+    private lateinit var mObjectGraph: ObjectGraph
+
+    override fun onCreate() {
+        super.onCreate()
+
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        }
+
+        mObjectGraph = ObjectGraph.create(AppModule(this));
+    }
+
+    override fun inject(o: Any?) {
+        mObjectGraph.inject(o)
+    }
+    override fun getObjectGraph(): ObjectGraph? {
+        return mObjectGraph
     }
 }

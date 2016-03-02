@@ -348,7 +348,7 @@ public class CreateFragment extends BaseFragment {
 
     @OnClick(R.id.select_location)
     public void onSelectLocation() {
-        Intent intent = SelectLocationActivity.createIntent(getContext());
+        Intent intent = SelectLocationActivity.Companion.createIntent(getContext());
         startActivityForResult(intent, 0);
     }
 }

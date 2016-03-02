@@ -26,6 +26,7 @@ package org.bbqapp.android.extension
 
 import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
+import rx.functions.Func1
 import rx.schedulers.Schedulers
 
 fun <T> Observable<T>.observeOnMainThread() = this.observeOn(AndroidSchedulers.mainThread())
@@ -36,3 +37,16 @@ fun <T> Observable<T>.subscribeOnIoThread() = this.subscribeOn(Schedulers.io())
 
 fun <T> Observable<T>.unsubscribeOnMainThread() = this.unsubscribeOn(AndroidSchedulers.mainThread())
 fun <T> Observable<T>.unsubscribeOnIoThread() = this.unsubscribeOn(Schedulers.io())
+
+fun <T> Observable<T>.filterBest(filter: Function2<T, T, Boolean>) =
+        this.filter(object : Func1<T, Boolean> {
+            var mBest: T? = null
+            @Synchronized override fun call(next: T): Boolean? {
+                val best = mBest
+                var isBetter = (best == null || filter(best, next))
+                if (isBetter) {
+                    mBest = next
+                }
+                return isBetter
+            }
+        })

@@ -54,9 +54,8 @@ class PlaceListAdapter(private val layoutInflater: LayoutInflater) : AbstractLis
 
 
         distanceTextView.text = "Unknown"
-        val distance = getDistance(place)
-        distance?.let {
-            distanceTextView.text = DistanceFormatter.format(distance.toDouble())
+        getDistance(place)?.let {
+            distanceTextView.text = DistanceFormatter.format(it.toDouble())
         }
 
         return view

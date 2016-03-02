@@ -76,7 +76,7 @@ class SearchAddressActivity : BaseActivity() {
                 .doOnError { Toast.makeText(this, R.string.resolve_error, Toast.LENGTH_LONG).show() }
                 .retry()
                 .bindToLifecycle(this)
-                .subscribe { adapter.setLocations(it) }
+                .subscribe { adapter.set(it) }
     }
 
     companion object {

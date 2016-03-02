@@ -87,7 +87,7 @@ class LocationService(private val locationManager: LocationManager) {
 
     protected fun provideCriteria(): Criteria {
         val criteria = Criteria()
-        criteria.isBearingRequired = true
+        //criteria.isBearingRequired = true
         criteria.accuracy = Criteria.ACCURACY_FINE
         criteria.powerRequirement = Criteria.POWER_MEDIUM
 

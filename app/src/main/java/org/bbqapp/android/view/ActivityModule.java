@@ -28,17 +28,14 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.view.LayoutInflater;
-
-import org.bbqapp.android.AppModule;
-import org.bbqapp.android.auth.Facebook;
-import org.bbqapp.android.auth.GooglePlus;
-import org.bbqapp.android.view.create.SelectLocationActivity;
-
-import javax.inject.Singleton;
-
 import dagger.Module;
 import dagger.Provides;
 import de.halfbit.tinybus.TinyBus;
+import org.bbqapp.android.AppModule;
+import org.bbqapp.android.auth.Facebook;
+import org.bbqapp.android.auth.GooglePlus;
+
+import javax.inject.Singleton;
 
 /**
  * Module for all activities and for all its fragments
@@ -47,7 +44,6 @@ import de.halfbit.tinybus.TinyBus;
         addsTo = AppModule.class,
         injects = {
                 MainActivity.class,
-                SelectLocationActivity.class,
         },
         library = true
 )

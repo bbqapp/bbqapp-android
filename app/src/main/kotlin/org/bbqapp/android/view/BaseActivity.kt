@@ -38,7 +38,7 @@ import org.bbqapp.android.Injector
 import timber.log.Timber
 
 open class BaseActivity : RxAppCompatActivity(), Injector {
-    private val injector = KodeinInjector()
+    internal  val injector = KodeinInjector()
     private var objectGraph: ObjectGraph? = null
 
     private val refWatcher: RefWatcher by injector.instance()

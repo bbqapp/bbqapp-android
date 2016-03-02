@@ -54,17 +54,25 @@ class LocationListAdapter : AbstractListAdapter<Parcelable>() {
         return locations
     }
 
-    fun setLocations(locations: List<Parcelable>?) {
-        this.locations.clear()
-        locations?.let {
-            this.locations.addAll(locations)
+    fun set(items: List<Parcelable>?) {
+        locations.clear()
+        items?.let {
+            locations.addAll(items)
         }
 
         onInvalidated()
     }
 
-    fun add(item: Parcelable) {
-        locations.add(item)
+    fun set(vararg items: Parcelable) {
+        set(items.asList())
+    }
+
+    fun add(vararg items: Parcelable) {
+        add(items.asList())
+    }
+
+    fun add(items: List<Parcelable>?) {
+        items?.let { locations.addAll(items) }
 
         onInvalidated()
     }
