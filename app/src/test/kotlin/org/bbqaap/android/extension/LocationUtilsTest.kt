@@ -22,16 +22,46 @@
  * SOFTWARE.
  */
 
-package org.bbqapp.android.extension
+package org.bbqaap.android.extension
 
 import android.location.Address
 import android.location.Location
-import com.google.android.gms.maps.model.LatLng
+import org.bbqapp.android.extension.getLatLng
+import org.junit.Assert.assertEquals
+import org.junit.Test
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
 import org.bbqapp.android.api.model.Location as ApiLocation
 
-fun Address.getLatLng() = LatLng(latitude, longitude)
-fun Location.getLatLng() = LatLng(latitude, longitude)
-fun ApiLocation.getLatLng() = LatLng(getLatitude(), getLongitude())
+class LocationUtilsTest {
+    @Test fun testLocationToLatLng() {
+        val location = mock(Location::class.java)
+        `when`(location.latitude).thenReturn(12.65)
+        `when`(location.longitude).thenReturn(98.12)
 
-fun ApiLocation.getLatitude() = coordinates[1]
-fun ApiLocation.getLongitude() = coordinates[0]
+        val latLng = location.getLatLng()
+
+        assertEquals(latLng.latitude, 12.65, 0.001)
+        assertEquals(latLng.longitude, 98.12, 0.001)
+    }
+
+    @Test fun testApiLocationToLatLng() {
+        var location = ApiLocation(listOf(95.23, 12.54), "Point")
+
+        var latLng = location.getLatLng()
+
+        assertEquals(latLng.latitude, 12.54, 0.001)
+        assertEquals(latLng.longitude, 95.23, 0.001)
+    }
+
+    @Test fun testAddressToLatLng() {
+        var address = mock(Address::class.java)
+        `when`(address.latitude).thenReturn(14.98)
+        `when`(address.longitude).thenReturn(89.21)
+
+        var latLng = address.getLatLng()
+
+        assertEquals(latLng.latitude, 14.98, 0.001)
+        assertEquals(latLng.longitude, 89.21, 0.001)
+    }
+}
